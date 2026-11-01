@@ -428,8 +428,11 @@ function pick(round, index) {
   const list = [];
   if (o.say) { list.push(say(o.by || '阿芬', o.say)); log(o.by || '阿芬', o.say); }
   if (o.back) { list.push(foreignLine(o.back)); log(c.delegate, o.back.o, o.back.zh); }
-  (o.reply || []).forEach(([w, t]) => { list.push(say(w, t)); log(w, t); });
-  (o.after || []).forEach(([w, t]) => { list.push(say(w, t)); log(w, t); });
+  for (const entry of [].concat(o.reply || [], o.after || [])) {
+    const line = spoken(entry);
+    list.push(line);
+    log(line.who, line.text, line.zh);
+  }
   opts.save(record);
   refresh();
   play(list, () => {

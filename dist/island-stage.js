@@ -23,7 +23,10 @@ setTimeout(syncCasesProgress,50);
 const fold=document.createElement('button');
 fold.className='stage-sidebar-fold';
 fold.textContent='案卷 ▤';
-fold.onclick=()=>document.querySelector('.explorer').classList.toggle('sidebar-open');
+fold.onclick=()=>{
+  document.querySelector('.explorer')?.classList.toggle('sidebar-open');
+  document.body.classList.toggle('sidebar-open');
+};
 document.querySelector('.explorer').append(fold);
 if(page){
   document.body.classList.add('stage-page');
@@ -71,9 +74,15 @@ function setImp(el,name,value){
   if(value==null||value==='')el.style.removeProperty(name);
   else el.style.setProperty(name,value,'important');
 }
+function pinHubPanel(){
+  if(!panel||document.body.classList.contains('stage-page'))return;
+  if(panel.parentElement!==document.body)document.body.appendChild(panel);
+  setImp(panel,'position','fixed');
+}
 function applyBox(box,{keepHeight=true}={}){
   if(!panel||!box)return;
   panel.classList.add('is-user-sized');
+  pinHubPanel();
   // Pin the left edge so width always grows left → right.
   setImp(panel,'position','fixed');
   setImp(panel,'right','auto');
@@ -129,6 +138,7 @@ function collapsePanel(closed){
 }
 function dressPanel(){
   if(!panel)return;
+  pinHubPanel();
   if(!panel.querySelector('.dossier-bar')){
     const bar=document.createElement('div');
     bar.className='dossier-bar';

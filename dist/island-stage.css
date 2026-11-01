@@ -165,12 +165,13 @@ body:not(.stage-page) .stage-launchers button span{margin-left:6px;opacity:.72;f
 /* Same action as 案件選擇; keep only one control in the hub header. */
 body:not(.stage-page) #passport,
 body:not(.stage-page) .passport.is-hub-hidden{display:none!important}
-body:not(.stage-page) .explorer>#island-panel{
+body:not(.stage-page) .explorer>#island-panel,
+body:not(.stage-page) #island-panel{
   position:fixed!important;
   top:64px!important;
   right:12px!important;
   left:auto!important;
-  z-index:30!important;
+  z-index:40!important;
   width:min(188px,18vw)!important;
   max-width:min(200px,20vw)!important;
   height:auto;
@@ -183,7 +184,9 @@ body:not(.stage-page) .explorer>#island-panel{
   resize:none;
   box-shadow:0 10px 24px #16343a18!important;
 }
-body:not(.stage-page) .explorer>#island-panel.is-user-sized{
+body:not(.stage-page) .explorer>#island-panel.is-user-sized,
+body:not(.stage-page) #island-panel.is-user-sized{
+  position:fixed!important;
   max-width:none!important;
   max-height:none!important;
 }
@@ -241,7 +244,9 @@ body:not(.stage-page) .explorer>#island-panel .season-save{font-size:8px!importa
 }
 #island-panel.is-collapsed,
 body:not(.stage-page) .explorer>#island-panel.is-collapsed,
-body:not(.stage-page) .explorer>#island-panel.is-user-sized.is-collapsed{
+body:not(.stage-page) .explorer>#island-panel.is-user-sized.is-collapsed,
+body:not(.stage-page) #island-panel.is-collapsed{
+  position:fixed!important;
   height:fit-content!important;
   min-height:0!important;
   max-height:52px!important;
@@ -267,7 +272,8 @@ body:not(.stage-page) #district.island-open{display:block!important;position:rel
   body:not(.stage-page) .scene-viewport{height:clamp(420px,68svh,720px);min-height:380px}
 }
 @media(max-width:620px){
-  body:not(.stage-page) .explorer>#island-panel{
+  body:not(.stage-page) .explorer>#island-panel,
+  body:not(.stage-page) #island-panel{
     display:none!important;
     top:auto!important;
     bottom:max(10px,env(safe-area-inset-bottom,0px))!important;
@@ -277,7 +283,8 @@ body:not(.stage-page) #district.island-open{display:block!important;position:rel
     max-width:none!important;
     max-height:min(52dvh,420px)!important;
   }
-  body:not(.stage-page) .explorer.sidebar-open>#island-panel{display:block!important;z-index:45!important}
+  body:not(.stage-page) .explorer.sidebar-open>#island-panel,
+  body:not(.stage-page).sidebar-open #island-panel{display:block!important;position:fixed!important;z-index:45!important}
   body:not(.stage-page) .campaign-banner{max-width:min(160px,48vw)!important;top:10px!important}
   body:not(.stage-page) .scene-clock{
     left:auto!important;

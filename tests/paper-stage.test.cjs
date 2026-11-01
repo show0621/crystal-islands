@@ -115,6 +115,15 @@ test('every current episode and island has a paper set, without dropping newer c
   assert.match(read('world.js'), /原創案卷/);
 });
 
+test('hub dossier stays fixed to the viewport', () => {
+  const js = read('island-stage.js');
+  const css = read('island-stage.css');
+  assert.match(js, /function pinHubPanel\(/);
+  assert.match(js, /document\.body\.appendChild\(panel\)/);
+  assert.match(css, /body:not\(\.stage-page\) #island-panel\{/);
+  assert.match(css, /position:fixed!important/);
+});
+
 test('hub season title does not share the top-left slot with the weather chip', () => {
   const css = read('island-stage.css');
   assert.match(css, /body:not\(\.stage-page\) \.map-head/);

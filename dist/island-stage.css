@@ -143,12 +143,6 @@ body:not(.stage-page) .scene-destinations{
   margin:0 8px 18px;
   padding:0 8px 4px!important;
 }
-body:not(.stage-page) .explorer>#island-panel{
-  width:min(168px,18vw)!important;
-  max-width:min(168px,18vw)!important;
-  top:58px!important;
-  right:10px!important;
-}
 body:not(.stage-page) .bapa-harbor{width:52px!important;max-width:52px!important}
 body:not(.stage-page)>header{position:sticky;top:0;z-index:50;background:#fffef7}
 body:not(.stage-page) .stage-launchers{
@@ -166,34 +160,63 @@ body:not(.stage-page) .explorer>#island-panel{
   right:12px!important;
   left:auto!important;
   z-index:30!important;
-  width:min(220px,24vw)!important;
-  max-width:min(360px,46vw)!important;
+  width:min(188px,18vw)!important;
+  max-width:min(200px,20vw)!important;
   height:auto;
-  max-height:none!important;
+  max-height:min(70vh,560px)!important;
   overflow:auto!important;
+  padding:8px 9px 12px!important;
+  border-radius:14px!important;
   background:#fffdf8f6!important;
   color:#24382f!important;
   resize:none;
+  box-shadow:0 10px 24px #16343a18!important;
+}
+body:not(.stage-page) .explorer>#island-panel.is-user-sized{
+  max-width:none!important;
+  max-height:none!important;
 }
 body:not(.stage-page) #island-panel :where(h2,h3,p,small,span,b,div,button.text-button){color:#24382f!important}
 body:not(.stage-page) #island-panel .primary,
 body:not(.stage-page) #island-panel .primary *{color:#fffaf0!important}
 body:not(.stage-page) .scene-is-night #island-panel,
 body.scene-is-night #island-panel :where(h2,h3,p,small,span,b,div){color:#24382f!important}
-.dossier-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 8px;cursor:grab;user-select:none;touch-action:none}
-.dossier-bar b{font-size:11px;letter-spacing:.12em;color:#5d735f!important}
-.dossier-fold{width:28px;height:28px;min-height:28px!important;padding:0!important;border:1px solid #c9d4bc;border-radius:50%;background:#fff;color:#35594d!important;font-weight:800}
-.dossier-resize{position:absolute;right:4px;bottom:4px;width:16px;height:16px;cursor:nwse-resize;touch-action:none;border-right:2px solid #7d9a86;border-bottom:2px solid #7d9a86;border-radius:0 0 6px 0}
-#island-panel.is-collapsed{height:auto!important;max-height:none!important;overflow:hidden!important;padding-bottom:10px!important}
+body:not(.stage-page) .explorer>#island-panel .season-kicker{font-size:7px!important;margin:0!important;letter-spacing:.08em}
+body:not(.stage-page) .explorer>#island-panel .case-number{margin:4px 0 2px!important;font-size:10px!important}
+body:not(.stage-page) .explorer>#island-panel .active-case-title{font-size:15px!important;line-height:1.3!important;margin:2px 0!important}
+body:not(.stage-page) .explorer>#island-panel .active-case-subtitle{font-size:10px!important;line-height:1.45!important;margin:2px 0 6px!important}
+body:not(.stage-page) .explorer>#island-panel .single-objective{margin:6px 0!important;padding:7px 8px!important;border-radius:10px}
+body:not(.stage-page) .explorer>#island-panel .single-objective small{font-size:7px!important}
+body:not(.stage-page) .explorer>#island-panel .single-objective b{font-size:12px!important;line-height:1.4!important}
+body:not(.stage-page) .explorer>#island-panel .single-objective p{font-size:10px!important;line-height:1.45!important;margin:4px 0 0!important}
+body:not(.stage-page) .explorer>#island-panel button.primary{font-size:11px!important;padding:8px 10px!important;min-height:34px!important;border-radius:999px}
+body:not(.stage-page) .explorer>#island-panel .season-hint-link{font-size:10px!important;margin:6px 0 2px!important}
+body:not(.stage-page) .explorer>#island-panel .season-save{font-size:8px!important;display:block;margin-top:4px}
+.dossier-bar{display:flex;align-items:center;gap:6px;margin:0 0 6px;cursor:grab;user-select:none;touch-action:none}
+.dossier-bar b{font-size:10px;letter-spacing:.12em;color:#5d735f!important}
+.dossier-hint{margin-right:auto;font-size:8px;color:#8a9a84!important;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dossier-fold{width:24px;height:24px;min-height:24px!important;padding:0!important;border:1px solid #c9d4bc;border-radius:50%;background:#fff;color:#35594d!important;font-weight:800;flex:0 0 auto}
+.dossier-resize{
+  position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;
+  border-right:3px solid #7d9a86;border-bottom:3px solid #7d9a86;border-radius:0 0 8px 0;opacity:.85;z-index:2;
+}
+.dossier-resize-x{
+  position:absolute;top:28px;right:0;bottom:22px;width:10px;cursor:ew-resize;touch-action:none;z-index:2;
+}
+.dossier-resize-x:after{
+  content:'';position:absolute;top:50%;right:2px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
+}
+#island-panel.is-collapsed{height:auto!important;max-height:none!important;overflow:hidden!important;padding-bottom:8px!important}
 #island-panel.is-collapsed>:not(.dossier-bar){display:none!important}
+#island-panel.is-collapsed .dossier-hint,#island-panel.is-collapsed .dossier-resize,#island-panel.is-collapsed .dossier-resize-x{display:none!important}
 #enter-island{display:none!important}
 body:not(.stage-page) #district.island-open{display:block!important;position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:28px 22px 72px;background:#f6f3ea;color:#35594d}.process-observation{scroll-margin-top:76px}
 
 /* Phone/tablet only: keep desktop dossier rail intact above these widths. */
 @media(max-width:900px){
-  body:not(.stage-page) .explorer>#island-panel{
-    width:min(260px,40vw)!important;
-    max-width:min(280px,44vw)!important;
+  body:not(.stage-page) .explorer>#island-panel:not(.is-user-sized){
+    width:min(200px,34vw)!important;
+    max-width:min(210px,36vw)!important;
     top:70px!important;
   }
   body:not(.stage-page) .stage-launchers{max-width:calc(100% - 160px);flex-wrap:wrap}

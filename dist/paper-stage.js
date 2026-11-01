@@ -780,6 +780,23 @@
   function isIslandVisit(root) {
     return !!root?.querySelector?.('.resident-visit, .pet-story');
   }
+  function isBoardOverlay(root) {
+    const box = root || document.getElementById('modal-content');
+    return !!box?.querySelector?.('.detective-board, .paper-board-quest');
+  }
+  function resumeCaseFromBoard() {
+    const rec = typeof seasonRecord === 'function' ? seasonRecord() : null;
+    if (!rec) return false;
+    if (rec.complete && typeof showSeasonEnding === 'function') {
+      showSeasonEnding(typeof season !== 'undefined' ? season.current : undefined);
+      return true;
+    }
+    if (typeof openCampaignStep === 'function') {
+      openCampaignStep();
+      return true;
+    }
+    return false;
+  }
   function dressPages() {
     const modal = document.getElementById('modal');
     const content = document.getElementById('modal-content');
@@ -1222,7 +1239,26 @@
       if (modal.classList.contains('paper-open') || modal.classList.contains('hub-open')) clampCaseWindow(modal);
     });
   }
-  document.getElementById('modal')?.addEventListener('close', () => {
+  const modalEl = document.getElementById('modal');
+  const closeBtn = document.getElementById('close-modal');
+  closeBtn?.addEventListener('click', event => {
+    if (!isBoardOverlay()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    resumeCaseFromBoard();
+  }, true);
+  modalEl?.addEventListener('cancel', event => {
+    if (!isBoardOverlay()) return;
+    event.preventDefault();
+    resumeCaseFromBoard();
+  });
+  modalEl?.addEventListener('click', event => {
+    if (event.target !== modalEl || !isBoardOverlay()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    resumeCaseFromBoard();
+  }, true);
+  modalEl?.addEventListener('close', () => {
     const modal = document.getElementById('modal');
     liveScene = '';
     modal?.classList.remove('paper-open');

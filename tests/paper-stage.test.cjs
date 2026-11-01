@@ -24,6 +24,17 @@ test('許澄 is retired and 阿芬 leads the audit cast', () => {
   assert.match(read('paper-stage.js'), /extra: 'afin'/);
 });
 
+test('closing the investigation board returns to the live case', () => {
+  const paper = read('paper-stage.js');
+  const board = read('investigation.js');
+  assert.match(paper, /function isBoardOverlay\(/);
+  assert.match(paper, /function resumeCaseFromBoard\(/);
+  assert.match(paper, /detective-board, \.paper-board-quest/);
+  assert.match(paper, /stopImmediatePropagation/);
+  assert.match(board, /\$\('#board-back'\)\.onclick/);
+  assert.match(board, /openCampaignStep\(\)/);
+});
+
 test('island people and pets stay outside paper theater', () => {
   const paper = read('paper-stage.js');
   const css = read('paper-stage.css');

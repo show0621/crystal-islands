@@ -6,7 +6,20 @@ bar.className='stage-launchers';
 bar.setAttribute('aria-label','案件選擇');
 bar.innerHTML='<button type="button" data-work-page="cases">案件選擇</button>';
 document.querySelector('header').append(bar);
-bar.querySelector('[data-work-page="cases"]').onclick=()=>showSeasonJournal();
+const casesBtn=bar.querySelector('[data-work-page="cases"]');
+casesBtn.onclick=()=>showSeasonJournal();
+/* Hub keeps one entry: 案件選擇. Hide the old passport twin that opened the same journal. */
+document.getElementById('passport')?.classList.add('is-hub-hidden');
+function syncCasesProgress(){
+  try{
+    if(typeof episodes==='undefined'||typeof season==='undefined')return;
+    const done=Object.values(season.records||{}).filter(x=>x.complete).length;
+    casesBtn.innerHTML=`案件選擇 <span>${done} / ${episodes.length}</span>`;
+  }catch{}
+}
+syncCasesProgress();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncCasesProgress();});
+setTimeout(syncCasesProgress,50);
 const fold=document.createElement('button');
 fold.className='stage-sidebar-fold';
 fold.textContent='案卷 ▤';

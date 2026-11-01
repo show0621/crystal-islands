@@ -154,6 +154,10 @@ body:not(.stage-page) .stage-launchers{
   transform:translateY(-50%)!important;
 }
 body:not(.stage-page) .stage-launchers button{min-height:34px;padding:6px 14px}
+body:not(.stage-page) .stage-launchers button span{margin-left:6px;opacity:.72;font-weight:700}
+/* Same action as 案件選擇; keep only one control in the hub header. */
+body:not(.stage-page) #passport,
+body:not(.stage-page) .passport.is-hub-hidden{display:none!important}
 body:not(.stage-page) .explorer>#island-panel{
   position:fixed!important;
   top:64px!important;

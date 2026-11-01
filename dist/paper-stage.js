@@ -18,21 +18,28 @@
   /** Pause after a line finishes so readers can finish the text before the jump. */
   const READ_PAUSE_MS = 4000;
   let guideTimer = 0;
+  let guidePendingAction = false;
   function clearGuideTimer() {
     if (guideTimer) {
       clearTimeout(guideTimer);
       guideTimer = 0;
     }
+    guidePendingAction = false;
   }
-  /** Force the next action into view inside nested theater scrollers (paper-book / side). */
-  function guideTo(node, { focus = true, delay = 0 } = {}) {
+  /** Force the next action into view. Prefer .paper-side — that is the real right-rail scroller. */
+  function guideTo(node, { focus = true, delay = 0, soft = false } = {}) {
     if (!node || !node.isConnected) return;
+    // Soft peeks (dialogue / curtain) must not cancel a pending jump to choices.
+    if (soft && guidePendingAction) return;
     clearGuideTimer();
+    if (delay > 0 && !soft) guidePendingAction = true;
     const run = () => {
+      guidePendingAction = false;
       if (!node.isConnected) return;
-      const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
-      const scroller = target.closest?.('.paper-book')
-        || target.closest?.('.paper-side')
+      const target = node.closest?.('.paper-tray, .paper-dialogue') || node;
+      const side = target.closest?.('.paper-side');
+      const scroller = side
+        || target.closest?.('.paper-book')
         || document.scrollingElement;
       const behavior = prefersReduceMotion() ? 'auto' : 'smooth';
       try {
@@ -43,7 +50,7 @@
           const next = scroller.scrollTop + (tRect.top - sRect.top) - topPad;
           scroller.scrollTo({ top: Math.max(0, next), behavior });
         } else {
-          target.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+          target.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' });
         }
       } catch {
         try { target.scrollIntoView(true); } catch { /* ignore */ }
@@ -469,6 +476,8 @@
         box.hidden = true;
         if (first && !rec.briefSeen) { rec.briefSeen = true; window.saveSeason?.(); }
         stage.querySelector('#paper-casecard')?.focus();
+        // Return focus to the live rail (choices if ready, else dialogue).
+        setTimeout(() => stage._paperResumeRail?.(), 0);
       };
       box.querySelector('.casefile-close').onclick = close;
       box.querySelector('.casefile-go').onclick = close;
@@ -477,7 +486,6 @@
     }
     stage.querySelector('#paper-casecard').addEventListener('click', () => openCaseFile(false));
     stage.querySelector('#paper-issues').addEventListener('click', () => openCaseFile(false, 'index'));
-    if (r.step === 0 && !r.briefSeen && !resumed) setTimeout(() => { if (stage.isConnected) openCaseFile(true); }, 700);
     const tray = stage.querySelector('.paper-tray');
     const slip = stage.querySelector('.paper-slip');
     const review = logic.querySelector('#review-story-talk');
@@ -616,15 +624,24 @@
     let lineDone = false;
     let queueDone = false;
     let lastFeedback = '';
+    function actionNode() {
+      if (!tray.classList.contains('is-waiting')) {
+        const live = tray.querySelector('.story-choices, .authored-questions, .contract-lines, button');
+        if (live) return live;
+      }
+      return slip.querySelector('#next-story-step, button') || tray.querySelector('button') || tray;
+    }
     function revealAction({ pause = false } = {}) {
       if (!queueDone) {
-        guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
+        guideTo(stage.querySelector('.paper-dialogue'), { focus: false, soft: true });
         return;
       }
-      const action = tray.querySelector('.story-choices, .authored-questions, .contract-lines, button')
-        || slip.querySelector('button')
-        || tray;
-      guideTo(action, { focus: !!tray.querySelector('button'), delay: pause ? READ_PAUSE_MS : 0 });
+      const action = actionNode();
+      guideTo(action, {
+        focus: !!action?.closest?.('.paper-tray')?.querySelector('button:not([disabled])')
+          || !!slip.querySelector('button:not([disabled])'),
+        delay: pause ? READ_PAUSE_MS : 0
+      });
     }
     function finishQueue() {
       queueDone = true;
@@ -637,15 +654,14 @@
     function showLine(index) {
       lineDone = false;
       stage.classList.remove('is-ready');
-      clearGuideTimer();
-      guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
+      // Soft: keep a pending jump-to-choices timer if the queue already finished.
+      guideTo(stage.querySelector('.paper-dialogue'), { focus: false, soft: true });
       say(lines[index], () => {
         lineDone = true;
         if (index >= lines.length - 1) finishQueue();
       });
     }
     function advance() {
-      clearGuideTimer();
       if (!lineDone) {
         finishTyping();
         lineDone = true;
@@ -670,9 +686,9 @@
       tray.classList.toggle('is-waiting', ok);
       say({ who: '阿芬', role: ok ? '查核領隊' : '這個推論還接不上', text: paragraph });
       const target = ok
-        ? (stage.querySelector('.paper-dialogue') || slip)
+        ? (slip.querySelector('#next-story-step, button') || stage.querySelector('.paper-dialogue') || slip)
         : (tray.querySelector('button') || stage.querySelector('.paper-dialogue'));
-      guideTo(target, { focus: !ok, delay: READ_PAUSE_MS });
+      guideTo(target, { focus: !ok || !!slip.querySelector('#next-story-step'), delay: READ_PAUSE_MS });
     }
     function dress(button) {
       if (!button || button.dataset.paperDressed) return;
@@ -700,12 +716,18 @@
       const watch = new MutationObserver(() => { if (stage.isConnected) syncFeedback(); else watch.disconnect(); });
       watch.observe(feedback, { childList: true, subtree: true });
     }
+    stage._paperResumeRail = () => {
+      if (!stage.isConnected) return;
+      if (queueDone) revealAction({ pause: false });
+      else guideTo(stage.querySelector('.paper-dialogue'), { focus: false, soft: true });
+    };
     stage.querySelector('#paper-rewind').onclick = () => window.rewindStoryStep?.();
     stage.querySelector('#paper-reset').onclick = () => {
       if (!window.confirm('重來會清掉這件案子目前的進度，從開場再查一次。')) return;
       liveScene = '';
       window.resetStoryCase?.();
     };
+    if (r.step === 0 && !r.briefSeen && !resumed) setTimeout(() => { if (stage.isConnected) openCaseFile(true); }, 700);
     stage.querySelectorAll('[data-paper-click]').forEach(button => {
       button.onclick = () => {
         const target = document.getElementById(button.dataset.paperClick);
@@ -741,7 +763,11 @@
       finishQueue();
     } else showLine(0);
     if (moved) {
-      setTimeout(() => guideTo(stage.querySelector('.paper-dialogue'), { focus: false }), prefersReduceMotion() ? 0 : 720);
+      setTimeout(() => {
+        // Soft peek only — never cancel the pending jump to choices.
+        guideTo(stage.querySelector('.paper-dialogue'), { focus: false, soft: true });
+        if (queueDone) revealAction({ pause: false });
+      }, prefersReduceMotion() ? 0 : 720);
     }
     armCaseWindow();
   }
@@ -968,6 +994,44 @@
     if (record.complete || record.step === before) return;
     openCampaignStep();
   };
+  // Remount in the same framed window (do not close → reopen with a different size).
+  resetStoryCase = function () {
+    liveScene = '';
+    const i = season.current;
+    season.records[i] = { step: 0, files: [], solved: [], dialogues: {}, answers: {}, notes: '', complete: false, sealed: false };
+    season.finished = false;
+    if (typeof clearFeedback === 'function') clearFeedback();
+    saveSeason();
+    renderSeason();
+    openCampaignStep();
+  };
+  window.resetStoryCase = resetStoryCase;
+  rewindStoryStep = function () {
+    const r = seasonRecord();
+    if (r.complete) {
+      if (!window.confirm('這件案子已經結案。回到上一步會重新打開結案判斷；已取得的證據和前面的作答都會保留。要繼續嗎？')) return;
+      r.complete = false;
+      r.sealed = false;
+      r.result = null;
+      season.finished = false;
+    }
+    const step = r.step;
+    const done = (r.solved || []).includes(step);
+    if (!done) {
+      delete r.answers[step];
+      delete r.dialogues[step];
+    }
+    if (step > 0) r.step = step - 1;
+    else if (done) {
+      toast('已經在第一步。這一步的作答已保留。');
+      return;
+    }
+    if (typeof clearFeedback === 'function') clearFeedback();
+    saveSeason();
+    renderSeason();
+    openCampaignStep();
+  };
+  window.rewindStoryStep = rewindStoryStep;
   let caseFramed = false;
   let caseChrome = false;
   function caseLimits() {
@@ -1044,9 +1108,17 @@
       handle.setAttribute('aria-label', '拖曳調整視窗大小');
       modal.append(restore, handle);
     }
+    modal.classList.remove('is-collapsed');
+    const foldBtn = modal.querySelector('.paper-fold');
+    if (foldBtn) {
+      foldBtn.textContent = '收合';
+      foldBtn.setAttribute('aria-label', '收合視窗');
+    }
     if (!caseFramed) {
       applyCaseFrame(modal, defaultCaseFrame());
       caseFramed = true;
+    } else {
+      clampCaseWindow(modal);
     }
     if (caseChrome) return;
     caseChrome = true;

@@ -39,6 +39,10 @@ test('theater auto-guides to choices instead of resetting scroll to top', () => 
   assert.match(bapa, /function guideTo\(/);
   assert.match(paper, /scrollTo\(/);
   assert.match(paper, /revealAction/);
+  assert.match(paper, /guidePendingAction/);
+  assert.match(paper, /soft:\s*true/);
+  assert.match(paper, /const side = target\.closest/);
+  assert.match(paper, /window\.resetStoryCase = resetStoryCase/);
   assert.doesNotMatch(paper, /side\.scrollTop\s*=\s*0/);
   assert.match(read('paper-stage.css'), /trayAttention/);
 });

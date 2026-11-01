@@ -39,20 +39,26 @@ function prefersReduceMotion() {
 const READ_PAUSE_MS = 4000;
 let guideTimer = 0;
 let pauseNextGuide = false;
+let guidePendingAction = false;
 function clearGuideTimer() {
   if (guideTimer) {
     clearTimeout(guideTimer);
     guideTimer = 0;
   }
+  guidePendingAction = false;
 }
-function guideTo(node, { focus = true, delay = 0 } = {}) {
+function guideTo(node, { focus = true, delay = 0, soft = false } = {}) {
   if (!node || !node.isConnected) return;
+  if (soft && guidePendingAction) return;
   clearGuideTimer();
+  if (delay > 0 && !soft) guidePendingAction = true;
   const run = () => {
+    guidePendingAction = false;
     if (!node.isConnected) return;
-    const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
-    const scroller = target.closest?.('.paper-book')
-      || target.closest?.('.paper-side')
+    const target = node.closest?.('.paper-tray, .paper-dialogue') || node;
+    const side = target.closest?.('.paper-side');
+    const scroller = side
+      || target.closest?.('.paper-book')
       || document.scrollingElement;
     const behavior = prefersReduceMotion() ? 'auto' : 'smooth';
     try {
@@ -63,7 +69,7 @@ function guideTo(node, { focus = true, delay = 0 } = {}) {
         const next = scroller.scrollTop + (tRect.top - sRect.top) - topPad;
         scroller.scrollTo({ top: Math.max(0, next), behavior });
       } else {
-        target.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+        target.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' });
       }
     } catch {
       try { target.scrollIntoView(true); } catch { /* ignore */ }
@@ -174,8 +180,7 @@ function show(i) {
   $('.actor-host').classList.toggle('is-listening', foreign);
   $('.actor-guest').classList.toggle('is-listening', !foreign);
   const bubble = $('.paper-dialogue');
-  clearGuideTimer();
-  guideTo(bubble, { focus: false });
+  guideTo(bubble, { focus: false, soft: true });
   bubble.classList.remove('is-pop'); void bubble.offsetWidth; bubble.classList.add('is-pop');
   bubble.classList.toggle('is-foreign', foreign);
   $('.paper-name').textContent = line.who;
@@ -199,7 +204,6 @@ function show(i) {
 }
 function advance() {
   if (!lines.length) return;
-  clearGuideTimer();
   if (!lineDone) {
     clearInterval(typing);
     $('.paper-text').textContent = full;
@@ -209,7 +213,10 @@ function advance() {
     return;
   }
   if (cursor < lines.length - 1) { cursor += 1; show(cursor); return; }
-  finish();
+  // Already finished lines: nudge choices into view without cancelling a pending pause.
+  const t = $('.paper-tray');
+  if (t && !t.classList.contains('is-waiting')) guideTo(t.querySelector('.story-choices, button') || t, { soft: true });
+  else finish();
 }
 function finish() {
   $('.paper-stage').classList.add('is-ready');

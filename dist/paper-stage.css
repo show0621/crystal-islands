@@ -1181,6 +1181,19 @@ body.case-theater > :not(dialog) {
 }
 .paper-stage.paper-play .paper-book > .case-brief.case-mission details { display: none; }
 .paper-stage.paper-play .paper-book > .case-brief p { font-size: 13.5px; line-height: 1.55; font-weight: 600; }
+.paper-stage.paper-play.bapa-theater .paper-book > .case-brief {
+  max-height: 236px;
+}
+.paper-stage.paper-play.bapa-theater .bapa-meters {
+  margin-bottom: 6px;
+}
+.paper-stage.paper-play.bapa-theater .bapa-meters b { font-size: 15px; }
+.paper-stage.paper-play.bapa-theater .paper-book > .case-brief .case-aim,
+.paper-stage.paper-play.bapa-theater .paper-book > .case-brief .case-next,
+.paper-stage.paper-play.bapa-theater .paper-book > .case-brief .case-person {
+  padding: 5px 8px;
+  margin-bottom: 4px;
+}
 .paper-stage.paper-play .book-cover { position: relative; grid-area: cover; }
 .paper-stage.paper-play .diorama {
   grid-area: stage;

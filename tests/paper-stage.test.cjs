@@ -53,6 +53,22 @@ test('paper play keeps a short mission rail and full brief in the case card', ()
   assert.match(css, /"brief side"/);
 });
 
+test('BAPA theater and campaign case entry share left mission / right dialogue layout', () => {
+  const bapa = read('bapa-theater.js');
+  const paper = read('paper-stage.js');
+  const voyage = read('bapa-voyage.js');
+  assert.match(bapa, /paper-stage paper-play has-guest bapa-theater/);
+  assert.match(bapa, /case-brief case-mission bapa-brief/);
+  assert.match(bapa, /class="paper-side"/);
+  assert.match(bapa, /function missionHTML\(/);
+  assert.match(bapa, /function openCaseCard\(/);
+  assert.match(bapa, /data-bapa-tool="casecard"/);
+  assert.match(voyage, /BAPATheater\.mount\(/);
+  assert.match(paper, /openCampaignStep = function/);
+  assert.match(paper, /mountPaper\(\)/);
+  assert.match(read('island-stage.js'), /showSeasonJournal\(\)/);
+});
+
 test('every current episode and island has a paper set, without dropping newer case content', () => {
   const paper = read('paper-stage.js');
   const ids = [...`${read('campaign-data.js')}\n${read('campaign-extra.js')}`.matchAll(/\bid:'([^']+)'/g)].map(m => m[1]);

@@ -97,7 +97,7 @@ function mount(container, options) {
         <div class="actor-pop actor-host"><div class="paper-actor"></div><i class="paper-stand"></i><span class="actor-tag"></span></div>
         <div class="actor-pop actor-guest" hidden><div class="paper-actor"></div><i class="paper-stand"></i><span class="actor-tag"></span></div>
       </div>
-      <div class="case-brief bapa-brief"></div>
+      <div class="case-brief case-mission bapa-brief"></div>
       <div class="paper-side">
         <div class="paper-dialogue" role="button" tabindex="0" aria-label="繼續對話">
           <div class="paper-portrait"></div>
@@ -107,6 +107,7 @@ function mount(container, options) {
         <div class="paper-overlay"><div class="paper-tray is-waiting"></div><div class="paper-slip"></div></div>
       </div>
       <div class="paper-tools">
+        <button type="button" data-bapa-tool="casecard">案情卡</button>
         <button type="button" data-bapa-tool="files">證據卡</button>
         <button type="button" data-bapa-tool="log">攻防筆錄</button>
         <button type="button" data-bapa-tool="menu">換一個案件</button>
@@ -250,6 +251,75 @@ function log(who, text, zh) {
   record.history.push({ speaker, text: zh ? `${text}\n（中譯）${zh}` : text });
 }
 
+function menuMission() {
+  return `<p class="case-aim"><b>目前任務。</b>從右側選一案進入雙邊預先訂價協商；你是臺方代表團。</p>
+    <p class="case-next"><b>完成後的下一步。</b>依爭點回應、密商與長官審查；可信度與緊張度會推向不同結局。</p>
+    <p class="case-person"><b>規則一句話。</b>好的回應靠證據與敢辯；差的回應跟著錯指令走。詳情開「案情卡」。</p>`;
+}
+function missionHTML() {
+  if (!c || !st) return menuMission();
+  const s = G.scripts[c.id], need = G.need(c.id), offer = G.offer(st);
+  const tension = Math.min(6, st.tension), rounds = s.rounds.length;
+  const done = Math.min(st.at, rounds);
+  const r = st.phase === 'round' || st.phase === 'crisis' ? G.round(st) : null;
+  const meters = `<div class="bapa-meters">
+      <div><small>論證可信度</small><b>${st.cred}<em>／需要 ${need}</em></b><i style="--v:${Math.max(0, Math.min(1, st.cred / need))}"></i></div>
+      <div class="${tension >= 4 ? 'is-hot' : ''}"><small>會場緊張度</small><b>${tension}<em>／6</em></b><i style="--v:${tension / 6}"></i></div>
+      <div><small>對方目前可能接受</small><b>${pct(offer)}</b><em>證據區間 ${pct(c.min)}–${pct(c.max)}</em></div>
+      <div><small>雙方開場</small><b>臺 ${pct(c.openingTW)}</b><em>${c.country} ${pct(c.openingOther)}</em></div>
+    </div>`;
+  if (st.phase === 'done') {
+    return `${meters}<p class="case-aim"><b>目前任務・結案。</b>${esc(st.outcome?.title || '協商已結束')}。可下載筆錄，或換打法重談。</p>
+      <p class="case-next"><b>完成後的下一步。</b>回到案件列表，或重來本案。</p>`;
+  }
+  if (st.phase === 'final') {
+    return `${meters}<p class="case-aim"><b>目前任務・最後提案。</b>接受、反提案，或休會。</p>
+      <p class="case-next"><b>完成後的下一步。</b>寫入結局與平行世界對照。</p>
+      <p class="case-person"><b>這場在吵什麼。</b>${esc(s.plain)}</p>`;
+  }
+  const step = Math.min(done + (st.phase === 'crisis' ? 0 : 1), rounds);
+  return `${meters}${r ? `<p class="case-aim"><b>第 ${step}／${rounds} 回合・${esc(r.issue)}。</b>${esc(r.title)}</p>` : `<p class="case-aim"><b>目前任務。</b>${esc(s.plain)}</p>`}
+    <p class="case-next"><b>完成後的下一步。</b>${st.phase === 'crisis' ? '先穩住會場氣氛，再進入下一爭點。' : step >= rounds ? '進入最後提案。' : '依選項回應後進入下一回合。'}</p>
+    <p class="case-person"><b>${esc(c.delegate)}是誰。</b>${esc(c.country)}代表｜${esc(c.theme)}</p>`;
+}
+function dossierHTML() {
+  if (!c) {
+    return `<p class="case-aim"><b>這裡在做什麼。</b>雙邊預先訂價協議（BAPA）是兩國主管機關在交易「發生之前」，先談好未來幾年的訂價方法、區間和關鍵假設。你是臺方代表團，對面是日本、義大利或荷蘭的主管機關代表。走廊與視訊那頭，審查會議會進來：召集人陸嚴要稅基，覆核官沈岸要依據。兩個人不會說同一句話。</p>
+      <p class="case-person"><b>怎麼玩。</b>每一回合對方會提出一個真實的爭點，你從幾種回應裡選一種。中間會插入<b>代表團密商</b>與<b>內部長官審查會議</b>。審查會上有人對、有人錯：阿芬或小查會捍衛查得到的範圍，王衡可能把功能說滿；陸嚴會咄咄相逼，沈岸會幫對的人緩頰。好的回應靠證據、敢跟對的同仁一起辯駁長官；差的回應跟著錯誤指令走，或堅持錯的想法。你的選擇會改變<b>論證可信度</b>、<b>會場緊張度</b>和<b>對方最後願意接受的數字</b>，並走向不同的平行結局。</p>
+      <p><b>為什麼難。</b>功能、風險與貢獻往往只能證明到一半：工單證明執行，不一定證明控制；提案被採用，不一定證明獨特。外方本部在看他們的代表會不會讓太多；陸嚴在看稅基，沈岸在看你們會不會把沒查完的部分寫成已確認。外方代表說原文，下方附中譯。</p>`;
+  }
+  const s = G.scripts[c.id];
+  const r = st && (st.phase === 'round' || st.phase === 'crisis') ? G.round(st) : null;
+  return `<p class="case-aim"><b>案情。</b>${esc(c.background)}</p>
+    <p class="case-person"><b>這場在吵什麼。</b>${esc(s.plain)}</p>
+    <p><b>為什麼難。</b>${esc(s.hard)}</p>
+    <p><b>單位。</b>${esc(c.unit)}；金額為新臺幣千元，全部為虛構教學數據。</p>
+    <p><b>開場。</b>臺 ${pct(c.openingTW)}｜${esc(c.country)} ${pct(c.openingOther)}；證據區間 ${pct(c.min)}–${pct(c.max)}。</p>
+    ${r ? `<p><b>本回合爭點。</b>${esc(r.issue)}｜${esc(r.title)}<br>${esc(r.plain)}<br><small class="bapa-tpg">${esc(r.tpg)}</small></p>` : ''}
+    <p><small>${esc(c.ref)}</small></p>`;
+}
+function openCaseCard(first) {
+  const book = $('.paper-book');
+  let box = book.querySelector('.paper-casefile');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'paper-casefile';
+    book.appendChild(box);
+  }
+  const title = c ? c.title : 'BAPA 圓桌劇場';
+  const sub = c ? `臺灣 × ${c.country}・${c.theme}` : '部本部島・雙邊預先訂價協商';
+  box.hidden = false;
+  box.innerHTML = `<div class="casefile-sheet"><header><small>案情簡報・${first ? '先看懂規則與案子' : '隨時可以回來看'}</small><h3>${esc(title)}</h3><p>${esc(sub)}</p><button type="button" class="casefile-close" aria-label="關閉案情簡報">✕</button></header><div class="casefile-body case-brief">${dossierHTML()}</div><footer><button type="button" class="casefile-go">${first ? '我看懂了，開始 →' : '回到會場'}</button></footer></div>`;
+  const close = () => {
+    box.hidden = true;
+    box.innerHTML = '';
+    $('[data-bapa-tool="casecard"]')?.focus();
+  };
+  box.querySelector('.casefile-close').onclick = close;
+  box.querySelector('.casefile-go').onclick = close;
+  box.querySelector('.casefile-go').focus({ preventScroll: true });
+}
+
 function menu() {
   c = null; record = null; st = null;
   setCover('BAPA 圓桌劇場', '部本部島・雙邊預先訂價協商');
@@ -258,15 +328,17 @@ function menu() {
   clue(null);
   resetCast();
   slip('');
-  brief(`<p class="case-aim"><b>這裡在做什麼。</b>雙邊預先訂價協議（BAPA）是兩國主管機關在交易「發生之前」，先談好未來幾年的訂價方法、區間和關鍵假設。你是臺方代表團，對面是日本、義大利或荷蘭的主管機關代表。走廊與視訊那頭，審查會議會進來：召集人陸嚴要稅基，覆核官沈岸要依據。兩個人不會說同一句話。</p>
-    <p class="case-person"><b>怎麼玩。</b>每一回合對方會提出一個真實的爭點，你從幾種回應裡選一種。中間會插入<b>代表團密商</b>與<b>內部長官審查會議</b>。審查會上有人對、有人錯：阿芬或小查會捍衛查得到的範圍，王衡可能把功能說滿；陸嚴會咄咄相逼，沈岸會幫對的人緩頰。好的回應靠證據、敢跟對的同仁一起辯駁長官；差的回應跟著錯誤指令走，或堅持錯的想法。你的選擇會改變<b>論證可信度</b>、<b>會場緊張度</b>和<b>對方最後願意接受的數字</b>，並走向不同的平行結局。</p>
-    <p><b>為什麼難。</b>功能、風險與貢獻往往只能證明到一半：工單證明執行，不一定證明控制；提案被採用，不一定證明獨特。外方本部在看他們的代表會不會讓太多；陸嚴在看稅基，沈岸在看你們會不會把沒查完的部分寫成已確認。外方代表說原文，下方附中譯。</p>`);
+  refresh();
   play([say('旁白', '小羊協商號靠岸了。部本部島的會議廳裡，圓桌兩側各擺著一面國旗。審查會議的兩張椅子已經拉開：一張給要稅基的人，一張給要依據的人。', '會議廳'), say('陸嚴', '上級明天問我為什麼加成還要讓。我要聽臺灣控制了什麼，不是你們查不到什麼。'), say('沈岸', '我不是來聽開價的。我要聽：你們查得到哪一步，查不到哪一步。陸座要稅基，我要依據。'), say('阿芬', '七份案卷，三個國家。先選一案。我們不是來贏稅的，是來找到兩國都說得出理由、也能帶回覆核的數字。')], () => {
     tray(`<div class="story-choices bapa-case-list">${D.cases.map((k, i) => {
       const r = opts.peek(k.id), done = r?.debate?.outcome;
       const status = done ? `已結束：${done.title}` : r?.debate ? '協商進行中' : '尚未開始';
       return `<button type="button" data-case="${k.id}"><span>${k.flag}</span><b class="bapa-case-title">${esc(k.title)}<small>${esc(k.theme)}｜${esc(k.delegate)}（${k.country}）<br>${esc(status)}</small></b></button>`;
     }).join('')}</div>`).querySelectorAll('[data-case]').forEach(b => b.onclick = () => openCase(b.dataset.case));
+    if (!el.dataset.bapaBriefSeen) {
+      el.dataset.bapaBriefSeen = '1';
+      setTimeout(() => { if (el.isConnected && !c) openCaseCard(true); }, 500);
+    }
   });
 }
 
@@ -285,23 +357,7 @@ function openCase(id) {
 }
 
 function brief(html) { $('.bapa-brief').innerHTML = html; }
-function meters() {
-  const s = G.scripts[c.id], need = G.need(c.id), offer = G.offer(st);
-  const tension = Math.min(6, st.tension), rounds = s.rounds.length;
-  const done = Math.min(st.at, rounds);
-  const r = st.phase === 'round' || st.phase === 'crisis' ? G.round(st) : null;
-  return `<div class="bapa-meters">
-      <div><small>論證可信度</small><b>${st.cred}<em>／需要 ${need}</em></b><i style="--v:${Math.max(0, Math.min(1, st.cred / need))}"></i></div>
-      <div class="${tension >= 4 ? 'is-hot' : ''}"><small>會場緊張度</small><b>${tension}<em>／6</em></b><i style="--v:${tension / 6}"></i></div>
-      <div><small>對方目前可能接受</small><b>${pct(offer)}</b><em>證據區間 ${pct(c.min)}–${pct(c.max)}</em></div>
-      <div><small>雙方開場</small><b>臺 ${pct(c.openingTW)}</b><em>${c.country} ${pct(c.openingOther)}</em></div>
-    </div>
-    ${r ? `<p class="case-aim"><b>第 ${Math.min(done + (st.phase === 'crisis' ? 0 : 1), rounds)}／${rounds} 回合・${esc(r.issue)}。</b>${esc(r.title)}<br>${esc(r.plain)}<br><small class="bapa-tpg">${esc(r.tpg)}</small></p>` : ''}
-    <p class="case-person"><b>這場在吵什麼。</b>${esc(s.plain)}</p>
-    <p><b>為什麼難。</b>${esc(s.hard)}</p>
-    <p><b>單位。</b>${esc(c.unit)}；金額為新臺幣千元，全部為虛構教學數據。</p>`;
-}
-function refresh() { brief(meters()); }
+function refresh() { brief(missionHTML()); }
 
 function briefing() {
   st = G.start(c.id);
@@ -318,6 +374,7 @@ function briefing() {
   const list = [say('旁白', c.background, '案情'), ...s.opening.map(([w, t]) => say(w, t)), foreignLine(open), say('阿芬', `臺方開場提案 ${pct(c.openingTW)}。我們的理由，會在每一個爭點上逐一說明。`)];
   list.forEach(l => l.zh ? log(l.who, l.text, l.zh) : l.who !== '旁白' && log(l.who, l.text));
   opts.save(record);
+  setTimeout(() => { if (el.isConnected && c) openCaseCard(true); }, 450);
   play(list, () => {
     tray(`<div class="story-choices"><button type="button" id="bapa-go"><span>▶</span>開始第一回合</button></div>`).querySelector('#bapa-go').onclick = playRound;
   });
@@ -436,6 +493,7 @@ function tool(kind) {
   if (kind === 'voyage') return opts.voyage();
   if (kind === 'menu') { clearInterval(typing); return menu(); }
   if (kind === 'restart') { if (!c) return; clearInterval(typing); record = opts.reset(c.id); st = null; return openCase(c.id); }
+  if (kind === 'casecard') return openCaseCard(false);
   if (!c) return;
   if (kind === 'files') {
     slip(`<div class="bapa-files"><b>本案證據卡</b>${c.files.map(f => `<details><summary>${esc(f[0])} ${esc(f[1])}</summary><p>${esc(f[2])}</p></details>`).join('')}<small>${esc(c.ref)}</small></div>`);

@@ -48,6 +48,9 @@ test('island people and pets stay outside paper theater', () => {
   assert.match(css, /dialog#modal\.hub-open \.diorama/);
   assert.match(read('island-3d.js'), /class="pet-story"/);
   assert.match(read('island-3d.js'), /island-visit pet-story/);
+  assert.match(read('island-3d.js'), /xiaohua-original-v2\.webp/);
+  assert.match(read('island-3d.js'), /jumaru-original-v2\.webp/);
+  assert.doesNotMatch(read('island-3d.js'), /pet-story-icon/);
   assert.match(read('resident-chat.js'), /TPHubWindow\?\.refit/);
 });
 

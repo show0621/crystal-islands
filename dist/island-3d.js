@@ -185,13 +185,21 @@
  for(const side of [-1,1]){const shoulder=[side*.15,.61-lower,0],elbow=feed?[side*.19,.43,.13]:[side*.2,.47,walk?Math.sin(m.gait)*side*.07:.03],hand=feed?[side*.17,.26+Math.sin(q*2)*.035,.30]:m.state==='call'&&side>0?[.27,.88+Math.sin(q*3)*.04,.08]:[side*.19,.36,0];limb(shoulder,elbow,.05,'#f0c8d0',6);limb(elbow,hand,.043,skin,6);sphere(...hand,.048,skin,6);if(side>0&&feed){cone(hand[0],hand[1]-.03,hand[2]+.04,.075,.08,'#e8c273',6,7,.09);for(let j=0;j<4;j++){const fall=(q*.7+j*.23)%1;sphere(hand[0]+Math.sin(j)*.04,Math.max(.035,hand[1]-.03-fall*.23),hand[2]+.06+fall*.14,.017,'#aa7b45',6)}}}
  if(!feed)box(-.24,.29,.02,.17,.22,.11,'#e5bf79',6);rotateMesh(first,cx+m.x,cz+m.z,m.angle,{feedingGirl:true});residentPins.push({id:6,key:'girl',point:[cx+m.x,1.45,cz+m.z],label:'阿穎 · '+m.label});
  }
- function petOval(x,y,z,rx,ry,rz,c){const at=objects.length;sphere(0,0,0,1,c,6);for(let k=at;k<objects.length;k++)objects[k].v=objects[k].v.map(([a,b,d])=>[x+a*rx,y+b*ry,z+d*rz])}
- function drawPetMesh(p){const first=objects.length,[cx,cz]=layout[6],t=scene.time,cat=p.kind==='cat',fur=cat?'#e6aa58':'#fff0d8',patch='#986c4b',cream=cat?'#ffe3ad':'#fff9e8',a=p.action,
+ function petOval(x,y,z,rx,ry,rz,c){
+ // Proper pole triangles avoid degenerate normals and missing faces at the ears/cheeks.
+ const rows=8,n=14,point=(j,i)=>{const lat=-Math.PI/2+j/rows*Math.PI,lng=i/n*Math.PI*2;return [x+Math.cos(lat)*Math.cos(lng)*rx,y+Math.sin(lat)*ry,z+Math.cos(lat)*Math.sin(lng)*rz]};
+ for(let j=0;j<rows;j++)for(let i=0;i<n;i++){
+  const a=point(j,i),b=point(j+1,i),d=point(j,i+1),e=point(j+1,i+1);
+  if(j>0)face([a,b,d],c,6,null,true);
+  if(j<rows-1)face([b,e,d],c,6,null,true);
+ }
+ }
+ function drawPetMesh(p){const first=objects.length,[cx,cz]=layout[6],t=scene.time,cat=p.kind==='cat',fur=cat?'#efa34e':'#f1d7ab',patch='#d6ad7e',cream=cat?'#fff0d4':'#fff9e8',a=p.action,
  sleeping=['lampNap','roofNap','nap','loaf'].includes(a),sideNap=['lampNap','roofNap','nap'].includes(a),sit=['sit','groom','bark','meow'].includes(a),stretch=a==='stretch',belly=a==='belly',groom=a==='groom',walk=p.running,jump=a.startsWith('jump'),zoom=a==='zoom',wag=Math.sin(t*(cat?1.6:zoom?11:6)),breath=Math.sin(t*1.8)*.008,bob=walk?Math.abs(Math.sin(p.gait*2))*(zoom?.055:.025):0;
  const bodyY=sideNap?.24:sit?.43:stretch?.41:.4,headY=a==='sniff'?.35:belly?.52:sideNap?.28:stretch?.28:groom?.59:sit?.84:.76,headZ=sideNap?.35:stretch?.56:.38;
- petOval(0,bodyY+bob,sideNap?-.06:sit?-.12:-.08,cat?.37:.27,sideNap?.2:sit?.35:.26,cat?.43:.4,fur);
- petOval(0,bodyY+bob+.012,.18,cat?.25:.2,cat?.23:.2,.16,cream);
- if(!cat){petOval(-.17,bodyY+bob+.09,-.2,.12,.16,.19,patch);petOval(.22,bodyY+bob,-.1,.055,.15,.18,patch)}
+ petOval(0,bodyY+bob,sideNap?-.06:sit?-.12:-.08,cat?.49:.27,sideNap?(cat?.27:.2):sit?(cat?.43:.35):(cat?.34:.26),cat?.49:.4,fur);
+ petOval(0,bodyY+bob+.012,.18,cat?.36:.2,cat?.32:.2,cat?.25:.16,cream);
+ // 小花 has a cream-golden coat, with darker floppy ears rather than body patches.
  // Folded hind legs for sitting, extended forelegs for a dog bow or cat stretch.
  for(const side of [-1,1])for(const front of [-1,1]){const q=p.gait+(side*front>0?0:Math.PI),lift=walk?Math.max(0,Math.sin(q))*.11:0,z=front*.25+(walk?Math.cos(q)*.13:stretch&&front>0?.25:0),x=side*(sideNap?.28:.18),y=sideNap?.1:jump?.25:.055+lift;
  if(sit&&front<0){petOval(side*.22,.2,-.22,.14,.16,.19,fur);petOval(side*.2,.065,-.03,.12,.065,.18,cream)}
@@ -199,24 +207,27 @@
  }
  // Round cheeks and a larger forehead keep each face legible at miniature scale.
  const hx=groom?Math.sin(t*2.8)*.055:0,hy=headY+bob+breath+(p.calling?Math.sin(t*12)*.02:0),hz=headZ;
- petOval(hx,hy,hz,cat?.285:.27,cat?.25:.255,.245,fur);
- if(cat){for(const side of [-1,1]){cone(hx+side*.18,hy+.14,hz-.01,.105,.22,fur,6,3,.015);cone(hx+side*.18,hy+.17,hz+.025,.06,.12,'#e8b3a0',6,3,.008)}for(let j=-1;j<=1;j++)box(hx+j*.095,hy+.18,hz+.17,.035,.095,.035,'#ba7f3c',6)}
- else{for(const side of [-1,1])petOval(hx+side*.23,hy-.015+Math.sin(t*(zoom?12:3)+side)*.025,hz-.025,.105,.23,.13,patch);petOval(hx-.12,hy+.04,hz+.206,.115,.14,.05,patch)}
- for(const side of [-1,1])petOval(hx+side*.1,hy-.075,hz+.205,.115,.09,.07,cream);
- for(const side of [-1,1]){const ex=hx+side*.108,ey=hy+.035,ez=hz+.226;if(sleeping||groom){limb([ex-.042,ey,ez],[ex,ey-.014,ez+.012],.012,'#654f3e',6);limb([ex,ey-.014,ez+.012],[ex+.042,ey,ez],.012,'#654f3e',6)}else{petOval(ex,ey,ez,.041,.055,.027,'#453f36');sphere(ex-.011,ey+.017,ez+.025,.014,'#fffbed',6)}petOval(hx+side*.18,hy-.065,hz+.23,.045,.024,.014,'#e9b3a0')}
- petOval(hx,hy-.055,hz+.285,.038,.026,.028,cat?'#c28c86':'#554c44');
+ petOval(hx,hy,hz,cat?.36:.27,cat?.30:.255,cat?.29:.245,fur);
+ if(cat){for(const side of [-1,1]){cone(hx+side*.23,hy+.19,hz-.01,.105,.20,fur,6,12,.018);cone(hx+side*.23,hy+.22,hz+.025,.06,.10,'#e8b3a0',6,12,.012)}for(let j=-1;j<=1;j++)petOval(hx+j*.095,hy+.23,hz+.18,.022,.065,.025,'#cd853e')}
+ else{for(const side of [-1,1])petOval(hx+side*.23,hy-.015+Math.sin(t*(zoom?12:3)+side)*.025,hz-.025,.105,.23,.13,patch);petOval(hx,hy-.12,hz+.17,.16,.075,.07,cream)}
+ for(const side of [-1,1])petOval(hx+side*(cat?.13:.1),hy-.075,hz+(cat?.26:.205),cat?.15:.115,cat?.115:.09,.07,cream);
+ for(const side of [-1,1]){const ex=hx+side*.108,ey=hy+.035,ez=hz+(cat?.29:.226);if(sleeping||groom){limb([ex-.042,ey,ez],[ex,ey-.014,ez+.012],.012,'#654f3e',6);limb([ex,ey-.014,ez+.012],[ex+.042,ey,ez],.012,'#654f3e',6)}else{petOval(ex,ey,ez,cat?.062:.041,cat?.076:.055,.027,'#453f36');sphere(ex-.011,ey+.025,ez+.025,cat?.021:.014,'#fffbed',6)}petOval(hx+side*.18,hy-.065,hz+(cat?.30:.23),.045,.024,.014,'#e9b3a0')}
+ petOval(hx,hy-.055,hz+(cat?.35:.285),.038,.026,.028,cat?'#c28c86':'#554c44');
+ if(!cat&&!p.calling&&a!=='pant'&&!sleeping){for(const side of [-1,1]){limb([hx,hy-.09,hz+.29],[hx+side*.045,hy-.135,hz+.285],.009,'#71543d',6);limb([hx+side*.045,hy-.135,hz+.285],[hx+side*.085,hy-.11,hz+.27],.009,'#71543d',6)}}
  if(p.calling||a==='pant'){petOval(hx,hy-.125,hz+.25,.055,p.calling?.052:.028,.025,'#6e5148');petOval(hx+.015,hy-.17,hz+.275,.027,.055,.012,'#dc9e9a')}
  if(groom){const lick=(Math.sin(t*7)+1)/2;petOval(hx+.1,hy-.14,hz+.26+lick*.025,.025,.047,.014,'#e7a4a3')}
- if(cat)for(const side of [-1,1])for(let j=0;j<2;j++)limb([hx+side*.15,hy-.08+j*.035,hz+.255],[hx+side*.34,hy-.11+j*.065,hz+.23],.006,'#eee1c3',6);
+ if(cat)for(const side of [-1,1])for(let j=0;j<2;j++)limb([hx+side*.15,hy-.08+j*.035,hz+.32],[hx+side*.40,hy-.11+j*.065,hz+.23],.006,'#eee1c3',6);
  let prev=[0,bodyY+bob,-.4];for(let j=1;j<=5;j++){const end=cat?[Math.sin(t*.8+j*.45)*.085*j,bodyY+j*.08,-.4-j*.09]:[wag*.15*j/5,bodyY+j*.06,-.4-j*.075];limb(prev,end,cat?.06:.052,cat&&j%2===0?'#bd813d':fur,6);prev=end}
- if(cat)for(let j=0;j<3;j++)petOval(.32,bodyY+.07,-.27+j*.17,.037,.11,.035,'#bd813d');
+ if(cat)for(let j=0;j<3;j++)petOval(.46,bodyY+.07,-.27+j*.17,.037,.11,.035,'#bd813d');
  if(belly){for(let k=first;k<objects.length;k++)objects[k].v=objects[k].v.map(([x,y,z])=>[x+Math.sin(t*2)*.025,.84-y,z]);petOval(0,.704,-.02,.17,.035,.24,'#f2cfbd')}
+ // Keep the rounder cat's sleeping cheeks and belly clear of the ground.
+ if(cat){let floor=0;for(let k=first;k<objects.length;k++)for(const v of objects[k].v)floor=Math.min(floor,v[1]);if(floor<0)for(let k=first;k<objects.length;k++)objects[k].v=objects[k].v.map(([x,y,z])=>[x,y-floor,z])}
  // Scale from local coordinates before world rotation; roof elevation is applied once.
- const scale=cat?.77:.79;for(let k=first;k<objects.length;k++)objects[k].v=objects[k].v.map(([x,y,z])=>[x*scale,y*scale+p.y,z*scale]);
+ const scale=cat?.84:.79;for(let k=first;k<objects.length;k++)objects[k].v=objects[k].v.map(([x,y,z])=>[x*scale,y*scale+p.y,z*scale]);
  rotateMesh(first,cx+p.x,cz+p.z,p.angle,{pet:p.kind});
  if(scene.focus===6){petPins.push({kind:p.kind,point:[cx+p.x,p.y+(sideNap?.75:1.05),cz+p.z],text:p.calling?(cat?'喵～ ♡':'汪！汪汪！'):belly?'翻肚肚 ♡':sleeping?' z z Z ':null,state:p.state})}
  }
- function openPet(kind){const dog=kind==='dog';openModal('國稅查核島 · '+(dog?'小花':'橘丸'),`<div class="pet-story"><div class="pet-story-icon">${dog?'🐕':'🐈'}</div><h2>${dog?'小花 輪班小夥伴':'橘丸 廣場的胖橘貓'}</h2><p>${dog?'阿卷在港口撿到的小花狗，奶油白的毛上有幾塊咖啡色斑點。牠有自己的巡邏路線：先坐下看看人，再沿小徑嗅聞；忽然精神一來，就開啟短短的暴衝模式。':'原本只來公署門口討吃的橘貓，現在把整座廣場當客廳。看起來懶洋洋，卻會忽然衝出去追小花，再停下來舔爪、伸懶腰。'}</p><p>${dog?'跑累了會吐舌喘氣，接著翻過來露出粉嫩肚皮、舔舔毛或伸個大懶腰。偶爾會汪汪兩聲，遇見橘丸才湊過去玩一會兒。':'橘丸有自己的慢生活：舉起爪子舔毛洗臉、伸長身子、把手收成一顆麵包。牠會在路燈下側躺打盹，也能輕輕跳上查核公署屋頂，懶洋洋地看海，偶爾喵一聲。'}</p><button class="primary" id="pet-back">回到廣場看牠們玩 →</button></div>`);document.querySelector('#pet-back').onclick=()=>document.querySelector('#modal').close()}
+ function openPet(kind){const dog=kind==='dog';openModal('國稅查核島 · '+(dog?'小花':'橘丸'),`<div class="pet-story">${dog?`<img class="xiaohua-portrait" src="assets/xiaohua-original-v2.webp" alt="小花：奶油金色毛、垂耳圓眼與微笑的可愛小狗">`:`<img class="jumaru-portrait" src="assets/jumaru-original-v2.webp" alt="橘丸：圓臉大眼、短腿與奶油色大肚肚的可愛肥橘貓">`}<h2>${dog?'小花 輪班小夥伴':'橘丸 廣場的胖橘貓'}</h2><p>${dog?'阿卷在港口撿到的小花狗，奶油金色的柔毛、垂垂的耳朵，配上圓圓的眼睛和像在微笑的小嘴。牠有自己的巡邏路線：先坐下看看人，再沿小徑嗅聞；忽然精神一來，就開啟短短的暴衝模式。':'圓滾滾的橘丸有大大的琥珀眼睛、鼓鼓的臉頰、短短的小腿，還有奶油色的大肚肚。原本只來公署門口討吃，現在把整座廣場當客廳。看起來懶洋洋，卻會忽然衝出去追小花，再停下來舔爪、伸懶腰。'}</p><p>${dog?'跑累了會吐舌喘氣，接著翻過來露出粉嫩肚皮、舔舔毛或伸個大懶腰。偶爾會汪汪兩聲，遇見橘丸才湊過去玩一會兒。':'橘丸有自己的慢生活：舉起爪子舔毛洗臉、伸長身子、把手收成一顆麵包。牠會在路燈下側躺打盹，也能輕輕跳上查核公署屋頂，懶洋洋地看海，偶爾喵一聲。'}</p><button class="primary" id="pet-back">回到廣場看牠們玩 →</button></div>`);document.querySelector('#pet-back').onclick=()=>document.querySelector('#modal').close()}
  function drawSky(W,H){const sky=IslandSimulation.skyState(clockState.hour,scene.time,skySurprises.sample(clockState.hour,scene.skyTime)),dusk=sky.dusk,top=clockState.sky,sea=blend('#76bed0','#102b42',ambient),g=ctx.createLinearGradient(0,0,0,H*.65);g.addColorStop(0,top);g.addColorStop(.55,blend(sea,'#c7a3a0',dusk*.55));g.addColorStop(1,sea);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  if(sky.fog>.0001){ctx.save();ctx.globalAlpha=sky.fog;ctx.fillStyle='#e0ebdf';for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(W*(.15+j*.2)+Math.sin(scene.time*.1+j)*18,H*(.43+j*.075),W*.24,H*.011,0,0,Math.PI*2);ctx.fill()}ctx.restore()}
  if(sky.sun){ctx.save();ctx.globalAlpha=sky.sunAlpha;const x=W*sky.sunX,y=H*sky.sunY,r=Math.max(11,Math.min(W,H)*.019),halo=ctx.createRadialGradient(x,y,r*.2,x,y,r*(4+dusk*2));halo.addColorStop(0,blend('#fff5b8','#ffd6a1',dusk));halo.addColorStop(1,'#ffe8ae00');ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,y,r*6,0,Math.PI*2);ctx.fill();ctx.fillStyle=blend('#fff3bb','#ffd7ad',dusk);ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();

@@ -19,7 +19,7 @@ test('許澄 is retired and 阿芬 leads the audit cast', () => {
   for (const file of walk(dist)) assert.equal(fs.readFileSync(file, 'utf8').includes('許澄'), false, file);
   assert.match(read('island-biomes.js'), /\['阿芬','查核領隊'/);
   assert.match(read('rpg.js'), /阿芬 · 查核指導員/);
-  assert.match(read('resident-appearance.js'), /\['女','longwave','#7a4050','flower'/);
+  assert.match(read('resident-appearance.js'), /\['女','longwave','#7a4050','none'/);
   assert.match(read('bapa-data.js'), /"name":"阿芬","job":"臺方領隊","color":"#c46b86"/);
   assert.match(read('paper-stage.js'), /extra: 'afin'/);
 });
@@ -30,6 +30,16 @@ test('paper theater is wired ahead of the separate work-page launcher', () => {
   assert.ok(html.indexOf('paper-stage.js') < html.indexOf('island-stage.js'));
   assert.match(read('campaign.js'), /if\(window\.TPPaperTheater\)return/);
   assert.match(read('bapa-voyage.js'), /classList\.remove\('paper-open'\)/);
+});
+
+test('theater auto-guides to choices instead of resetting scroll to top', () => {
+  const paper = read('paper-stage.js');
+  const bapa = read('bapa-theater.js');
+  assert.match(paper, /function guideTo\(/);
+  assert.match(bapa, /function guideTo\(/);
+  assert.match(paper, /scrollIntoView/);
+  assert.doesNotMatch(paper, /side\.scrollTop\s*=\s*0/);
+  assert.match(read('paper-stage.css'), /trayAttention/);
 });
 
 test('every current episode and island has a paper set, without dropping newer case content', () => {

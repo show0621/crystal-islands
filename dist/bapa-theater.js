@@ -33,6 +33,29 @@ function actor(who) { return window.TPPaperKit ? TPPaperKit.actorSVG(who) : ''; 
 let el = null, opts = null, c = null, record = null, st = null;
 let lines = [], cursor = 0, typing = 0, full = '', lineDone = true, after = null, shown = { host: '', guest: '' };
 const $ = sel => el.querySelector(sel);
+function prefersReduceMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function guideTo(node, { focus = true } = {}) {
+  if (!node || !node.isConnected) return;
+  const run = () => {
+    try {
+      node.scrollIntoView({
+        behavior: prefersReduceMotion() ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    } catch { /* ignore */ }
+    const tray = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
+    if (!tray) return;
+    tray.classList.remove('is-attention');
+    void tray.offsetWidth;
+    tray.classList.add('is-attention');
+    tray.addEventListener('animationend', () => tray.classList.remove('is-attention'), { once: true });
+    if (focus) tray.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
+  };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+}
 
 function mount(container, options) {
   opts = options;
@@ -121,6 +144,7 @@ function show(i) {
   $('.actor-host').classList.toggle('is-listening', foreign);
   $('.actor-guest').classList.toggle('is-listening', !foreign);
   const bubble = $('.paper-dialogue');
+  guideTo(bubble, { focus: false });
   bubble.classList.remove('is-pop'); void bubble.offsetWidth; bubble.classList.add('is-pop');
   bubble.classList.toggle('is-foreign', foreign);
   $('.paper-name').textContent = line.who;
@@ -153,7 +177,12 @@ function finish() {
   const fn = after; after = null;
   fn?.();
 }
-function tray(html) { const t = $('.paper-tray'); t.innerHTML = html; return t; }
+function tray(html) {
+  const t = $('.paper-tray');
+  t.innerHTML = html;
+  if (html) guideTo(t.querySelector('.story-choices, button') || t);
+  return t;
+}
 function slip(html) { const s = $('.paper-slip'); s.innerHTML = html; s.classList.toggle('is-open', !!html); }
 
 const say = (who, text, role, extra = {}) => ({ who, text, role, ...extra });

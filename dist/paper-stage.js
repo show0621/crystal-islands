@@ -12,6 +12,30 @@
     location.assign(url.pathname);
     return true;
   }
+  function prefersReduceMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  /** Jump the next action into view (choices / dialogue). Auto-scroll beats a plain hint for 防呆. */
+  function guideTo(node, { focus = true } = {}) {
+    if (!node || !node.isConnected) return;
+    const run = () => {
+      try {
+        node.scrollIntoView({
+          behavior: prefersReduceMotion() ? 'auto' : 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+      } catch { /* ignore */ }
+      const tray = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
+      if (!tray) return;
+      tray.classList.remove('is-attention');
+      void tray.offsetWidth;
+      tray.classList.add('is-attention');
+      tray.addEventListener('animationend', () => tray.classList.remove('is-attention'), { once: true });
+      if (focus) tray.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(run));
+  }
   const CAST = {
     '簡毅': { role: '軟體中心主管', hair: '#2b2a2e', coat: '#2f7a8c', skin: '#f0c4a4', extra: 'glasses' },
     '蘇芮': { role: '區域營運長', hair: '#3b2a26', coat: '#8a6a1f', skin: '#f6d0b0', extra: '' },
@@ -567,11 +591,12 @@
       stage.classList.add('is-ready');
       tray.classList.remove('is-waiting');
       syncFeedback();
-      side.scrollTop = 0;
+      guideTo(tray.querySelector('.story-choices, .authored-questions, .contract-lines, button') || tray);
     }
     function showLine(index) {
       lineDone = false;
       stage.classList.remove('is-ready');
+      guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
       say(lines[index], () => {
         lineDone = true;
         if (index >= lines.length - 1) finishQueue();
@@ -655,12 +680,16 @@
       tray.classList.remove('is-waiting');
       say({ who: '旁白', role: '這一步', text: s.title || '' });
       syncFeedback();
+      guideTo(tray.querySelector('.story-choices, .authored-questions, .contract-lines, button') || tray);
     } else if (resumed && !fresh.length) {
       say(lines[0]);
       finishTyping();
       lineDone = true;
       finishQueue();
     } else showLine(0);
+    if (moved) {
+      setTimeout(() => guideTo(stage.querySelector('.paper-dialogue'), { focus: false }), prefersReduceMotion() ? 0 : 720);
+    }
     armCaseWindow();
   }
 

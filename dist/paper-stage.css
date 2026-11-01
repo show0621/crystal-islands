@@ -1156,24 +1156,31 @@ body.case-theater > :not(dialog) {
   width: auto;
   top: auto;
 }
-/* Two-page case window: stage on the left page, script on the right page, tools in their own row. */
-.paper-stage.paper-play .paper-desk { padding: 22px 24px 30px; }
+/* Two-page case window: left = stage + short mission, right = dialogue + choices. */
+.paper-stage.paper-play .paper-desk { padding: 18px 20px 24px; }
 .paper-stage.paper-play .paper-book {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: 58px minmax(0, 1.7fr) minmax(0, 1fr) auto;
-  grid-template-areas: "cover cover" "stage side" "brief side" "tools tools";
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  grid-template-rows: 58px minmax(240px, 1fr) auto auto;
+  grid-template-areas:
+    "cover cover"
+    "stage side"
+    "brief side"
+    "tools tools";
   margin: 0;
+  height: min(820px, calc(100dvh - 36px));
+  max-height: calc(100dvh - 24px);
 }
 .paper-stage.paper-play .paper-book > .case-brief {
   grid-area: brief;
   min-height: 0;
-  max-height: none;
+  max-height: 168px;
   overflow-y: auto;
-  margin: 0 10px 12px 14px;
-  padding: 10px 14px;
+  margin: 0 10px 10px 14px;
+  padding: 8px 12px;
 }
-.paper-stage.paper-play .paper-book > .case-brief p { font-size: 14px; line-height: 1.65; font-weight: 600; }
+.paper-stage.paper-play .paper-book > .case-brief.case-mission details { display: none; }
+.paper-stage.paper-play .paper-book > .case-brief p { font-size: 13.5px; line-height: 1.55; font-weight: 600; }
 .paper-stage.paper-play .book-cover { position: relative; grid-area: cover; }
 .paper-stage.paper-play .diorama {
   grid-area: stage;
@@ -1181,8 +1188,8 @@ body.case-theater > :not(dialog) {
   inset: auto;
   min-height: 0;
   height: auto;
-  margin: 12px 10px 10px 14px;
-  min-height: 220px;
+  margin: 10px 10px 8px 14px;
+  min-height: 200px;
   border-radius: 18px;
   overflow: hidden;
 }
@@ -1311,30 +1318,26 @@ body.case-theater > :not(dialog) {
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 12px 14px 10px 10px;
-  padding: 2px 6px 12px 2px;
+  gap: 10px;
+  margin: 10px 14px 10px 6px;
+  padding: 2px 6px 10px 2px;
   scrollbar-gutter: stable;
 }
 .paper-stage.paper-play .paper-side > .case-brief {
-  flex: 0 0 auto;
-  max-height: none;
-  overflow: visible;
-  margin: 0;
-  padding: 10px 14px;
+  display: none;
 }
-.paper-stage.paper-play .paper-side > .case-brief p { font-size: 14px; line-height: 1.65; font-weight: 600; }
 .paper-stage.paper-play .paper-side > .paper-dialogue {
   position: relative;
   inset: auto;
   width: auto;
   flex: 0 0 auto;
-  margin: 12px 0 0;
-  min-height: 96px;
+  margin: 0;
+  min-height: 110px;
   max-height: none;
   display: grid;
   grid-template-columns: 1fr 22px;
   align-items: end;
+  order: -1;
 }
 .paper-stage.paper-play .paper-side > .paper-dialogue::after,
 .paper-stage.paper-play .paper-side > .paper-dialogue .paper-portrait { display: none; }
@@ -1359,10 +1362,15 @@ body.case-theater > :not(dialog) {
   border: 3px solid #3a2a1a;
   border-radius: 16px;
   box-shadow: 4px 4px 0 #f0d56a;
+  flex: 1 1 auto;
 }
 .paper-stage.paper-play .paper-side .paper-tray.is-waiting { display: none; }
 .paper-stage.paper-play .paper-side .paper-slip.is-open { max-height: none; overflow: visible; }
 .paper-stage.paper-play .paper-side .professional-followup { max-height: none; overflow: visible; }
+.paper-stage.paper-play .paper-side > .paper-dialogue .paper-text {
+  font-size: 16.5px;
+  line-height: 1.55;
+}
 .paper-stage.paper-play .paper-book > .paper-tools {
   grid-area: tools;
   position: relative;
@@ -1387,15 +1395,22 @@ body.case-theater > :not(dialog) {
   }
   .paper-stage.paper-play .paper-book {
     grid-template-columns: minmax(0, 1fr);
-    /* Dialogue/choices before the long brief so phone/tablet users act without hunting. */
-    grid-template-rows: 58px min(42vw, 220px) max-content max-content max-content;
-    grid-template-areas: "cover" "stage" "side" "brief" "tools";
+    /* Phone: stage → short mission → dialogue/choices → tools */
+    grid-template-rows: 58px min(38vw, 200px) max-content max-content auto;
+    grid-template-areas: "cover" "stage" "brief" "side" "tools";
+    height: auto;
+    max-height: none;
+    min-height: 100%;
     background: #fbf6e8;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
   .paper-stage.paper-play .book-cover { position: sticky; top: 0; z-index: 6; }
-  .paper-stage.paper-play .paper-book > .case-brief { margin: 10px 10px 0; overflow: visible; }
+  .paper-stage.paper-play .paper-book > .case-brief {
+    margin: 8px 10px 0;
+    max-height: none;
+    overflow: visible;
+  }
   .paper-stage.paper-play .diorama { margin: 10px 10px 0; min-height: 0; }
   .paper-stage.paper-play .actor-pop { right: 18%; height: 50%; }
   .paper-stage.paper-play.has-guest .actor-host { left: 42%; height: 46%; }

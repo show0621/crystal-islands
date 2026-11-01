@@ -43,6 +43,16 @@ test('theater auto-guides to choices instead of resetting scroll to top', () => 
   assert.match(read('paper-stage.css'), /trayAttention/);
 });
 
+test('paper play keeps a short mission rail and full brief in the case card', () => {
+  const paper = read('paper-stage.js');
+  const css = read('paper-stage.css');
+  assert.match(paper, /function missionHTML\(/);
+  assert.match(paper, /case-brief case-mission/);
+  assert.match(paper, /missionHTML\(e, rec, s, aim/);
+  assert.match(css, /"stage side"/);
+  assert.match(css, /"brief side"/);
+});
+
 test('every current episode and island has a paper set, without dropping newer case content', () => {
   const paper = read('paper-stage.js');
   const ids = [...`${read('campaign-data.js')}\n${read('campaign-extra.js')}`.matchAll(/\bid:'([^']+)'/g)].map(m => m[1]);

@@ -315,16 +315,21 @@
     const H = 84 + card.flows.length * 30;
     return `<svg class="case-flow" viewBox="-4 -4 ${W + 8} ${H}" role="img" aria-label="公司關係與金流圖">${box}${arrows}</svg>`;
   }
-  function briefHTML(e, r, s, aim, guestWho, profile, guide) {
-    const card = window.TPCaseBriefs?.cases[e.id];
+  /** Short left-rail strip: only what you need while talking. Full dossier stays in 案情卡. */
+  function missionHTML(e, r, s, aim, guestWho, profile, guide) {
     const phase = window.TPCaseBriefs ? TPCaseBriefs.phaseOf(s) : '';
     const next = e.steps[r.step + 1];
     const nextAim = next ? (guide?.aims[r.step + 1] || next.title || '') : '';
-    const have = new Set(r.files || []);
-    const solved = new Set(r.solved || []);
     let html = `<p class="case-aim"><b>目前任務・第 ${r.step + 1} 步${phase ? '（' + safe(phase) + '）' : ''}。</b>${safe(aim)}</p>`;
     html += `<p class="case-next"><b>完成後的下一步。</b>${next ? `${safe(next.label)}：${safe(nextAim)}` : '寫出結案判斷：交易是什麼、爭點是什麼、證據支持什麼，以及還有哪些不確定。'}</p>`;
     if (profile) html += `<p class="case-person"><b>${safe(guestWho)}是誰。</b>${safe(profile)}</p>`;
+    return html;
+  }
+  function briefHTML(e, r, s, aim, guestWho, profile, guide) {
+    const card = window.TPCaseBriefs?.cases[e.id];
+    const have = new Set(r.files || []);
+    const solved = new Set(r.solved || []);
+    let html = missionHTML(e, r, s, aim, guestWho, profile, guide);
     if (card) {
       const tx = card.tx;
       html += `<details class="case-card"${r.step === 0 ? ' open' : ''}><summary>案情卡：公司、交易與金流</summary>
@@ -387,7 +392,7 @@
         <div class="book-cover" role="group" aria-label="拖曳書封以移動視窗"><b class="foil">${e.title}</b><small>${place} · ${s.label}</small></div>
         <div class="paper-stamp"><b>${r.step + 1}</b><small>/ ${e.steps.length}</small><em>${s.label}</em></div>
         <div class="diorama" data-theme="${theme.id}">${sceneArt(theme)}<div class="stage-curtain" aria-hidden="true"><i></i><i></i><b class="curtain-card"><small>前往下一個現場</small>${safe(place)} · ${safe(s.label)}</b></div><button type="button" class="stage-clue" hidden><span class="stage-clue-front"><small>翻開線索</small><b></b><em></em></span><span class="stage-clue-back"></span></button><div class="doc-slot" hidden><button type="button" class="examine" aria-label="檢視這張紙">✦</button></div><div class="actor-pop actor-host"><div class="paper-actor"></div><i class="paper-stand"></i></div><div class="actor-pop actor-guest" hidden><div class="paper-actor"></div><i class="paper-stand"></i><span class="actor-tag"></span></div></div>
-        <div class="case-brief">${briefHTML(e, r, s, aim, guestWho, profile, guide)}</div>
+        <div class="case-brief case-mission">${missionHTML(e, r, s, aim, guestWho, profile, guide)}</div>
       </div>
       <div class="paper-tools">
         <button type="button" id="paper-casecard">案情卡</button>
@@ -431,11 +436,7 @@
       const key = JSON.stringify([rec.step, rec.files, rec.solved]);
       if (key === briefKey) return;
       briefKey = key;
-      const open = [...briefEl.querySelectorAll(':scope > details')].map(d => d.open);
-      const top = briefEl.scrollTop;
-      briefEl.innerHTML = briefHTML(e, rec, s, aim, guestWho, profile, guide);
-      if (open.length) briefEl.querySelectorAll(':scope > details').forEach((d, i) => { if (open[i] !== undefined) d.open = open[i]; });
-      briefEl.scrollTop = top;
+      briefEl.innerHTML = missionHTML(e, rec, s, aim, guestWho, profile, guide);
     }
     briefKey = JSON.stringify([r.step, r.files, r.solved]);
     function issueIndexHTML() {

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>登入｜晶島物語</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <main class="gate">
+    <section class="panel" aria-labelledby="login-title">
+      <p class="brand-mark">晶島物語</p>
+      <h1 id="login-title">進入學習島</h1>
+      <p class="lead">此站僅供授權人員使用。請輸入帳號與密碼後繼續。</p>
+      <form id="login-form" autocomplete="on">
+        <label>帳號
+          <input id="username" name="username" type="text" autocomplete="username" required maxlength="64" spellcheck="false">
+        </label>
+        <label>密碼
+          <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="128">
+        </label>
+        <p id="error" class="error" role="alert" hidden></p>
+        <button type="submit" id="submit">進入群島</button>
+      </form>
+      <p class="note">密碼以伺服器端雜湊驗證，不會寫進前端程式。</p>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById('login-form');
+    const error = document.getElementById('error');
+    const submit = document.getElementById('submit');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      error.hidden = true;
+      submit.disabled = true;
+      submit.textContent = '驗證中…';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('username').value.trim(),
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          error.textContent = data.error || '登入失敗，請再試一次。';
+          error.hidden = false;
+          submit.disabled = false;
+          submit.textContent = '進入群島';
+          return;
+        }
+        location.href = '/';
+      } catch {
+        error.textContent = '無法連線到登入服務。';
+        error.hidden = false;
+        submit.disabled = false;
+        submit.textContent = '進入群島';
+      }
+    });
+  </script>
+</body>
+</html>

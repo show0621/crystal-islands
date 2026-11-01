@@ -976,7 +976,15 @@ dialog.paper-open.is-collapsed .paper-resize { display: none; }
 @keyframes bannerAway { to { opacity: 0; visibility: hidden; } }
 
 @media (max-width: 740px) {
-  dialog.paper-open { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }
+  dialog#modal.paper-open,
+  #modal.paper-open {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
   .paper-desk { padding: 46px 8px 8px; }
   .actor-pop { width: 96px; }
   .cut-house { width: 120px; }
@@ -986,9 +994,16 @@ dialog.paper-open.is-collapsed .paper-resize { display: none; }
   .paper-dialogue { grid-template-columns: 64px 1fr 16px; min-height: 96px; margin: 8px 4px 0; }
   .diorama > .paper-dialogue { min-height: 0; margin: 0; grid-template-columns: 1fr 16px; }
   .paper-portrait { height: 64px; }
-  .paper-text { font-size: 14px; }
+  .paper-text { font-size: 16px; }
   .paper-tray, .paper-slip { margin-left: 8px; margin-right: 8px; }
   .paper-stamp { width: 58px; height: 58px; }
+  .paper-stage .story-choices > button,
+  .paper-stage .authored-questions > button,
+  .paper-stage .contract-lines > button {
+    min-height: 48px;
+    font-size: 15px;
+    padding: 12px 14px;
+  }
 }
 .diorama .live-scene {
   position: absolute;
@@ -1361,14 +1376,25 @@ body.case-theater > :not(dialog) {
   background: #f6ecd6;
 }
 @media (max-width: 900px) {
+  dialog#modal.paper-open,
+  #modal.paper-open {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
   .paper-stage.paper-play .paper-book {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 58px 250px max-content max-content max-content;
-    grid-template-areas: "cover" "stage" "brief" "side" "tools";
+    /* Dialogue/choices before the long brief so phone/tablet users act without hunting. */
+    grid-template-rows: 58px min(42vw, 220px) max-content max-content max-content;
+    grid-template-areas: "cover" "stage" "side" "brief" "tools";
     background: #fbf6e8;
     overflow-y: auto;
+    overscroll-behavior: contain;
   }
-  .paper-stage.paper-play .book-cover { position: sticky; top: 0; }
+  .paper-stage.paper-play .book-cover { position: sticky; top: 0; z-index: 6; }
   .paper-stage.paper-play .paper-book > .case-brief { margin: 10px 10px 0; overflow: visible; }
   .paper-stage.paper-play .diorama { margin: 10px 10px 0; min-height: 0; }
   .paper-stage.paper-play .actor-pop { right: 18%; height: 50%; }
@@ -1376,7 +1402,35 @@ body.case-theater > :not(dialog) {
   .paper-stage.paper-play.has-guest .actor-guest { right: 16%; height: 50%; }
   .paper-stage.paper-play .paper-side { margin: 10px; overflow: visible; }
   .paper-stage.paper-play .stage-clue { width: 104px; height: 132px; }
-  .paper-stage.paper-play .paper-desk { padding: 14px 14px 24px; }
+  .paper-stage.paper-play .paper-desk { padding: max(10px, env(safe-area-inset-top, 0px)) 10px max(18px, env(safe-area-inset-bottom, 0px)); }
+  .paper-stage.paper-play .paper-book > .paper-tools {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom, 0px));
+  }
+  .paper-stage.paper-play .paper-tools button {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .paper-stage.paper-play .paper-side > .paper-dialogue {
+    position: sticky;
+    top: 58px;
+    z-index: 4;
+    background: #fffdf8;
+  }
+  .modal-top button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Fullscreen on phone/tablet: hide desktop window chrome. */
+  dialog.paper-open .modal-top button[aria-label="收合視窗"],
+  dialog.paper-open .modal-top button[aria-label="展開視窗"],
+  dialog.paper-open .modal-top button[aria-label="回復大小"],
+  dialog.paper-open .paper-resize {
+    display: none !important;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .stage-curtain { display: none; }

@@ -56,7 +56,19 @@ test('paper theater is wired ahead of the separate work-page launcher', () => {
   assert.ok(html.includes('paper-stage.css'));
   assert.ok(html.indexOf('paper-stage.js') < html.indexOf('island-stage.js'));
   assert.match(read('campaign.js'), /if\(window\.TPPaperTheater\)return/);
-  assert.match(read('bapa-voyage.js'), /classList\.remove\('paper-open'\)/);
+  assert.match(read('bapa-voyage.js'), /classList\.remove\('paper-open','bapa-theater-open'/);
+});
+
+test('BAPA voyage remounts the sea instead of leaving a black theater frame', () => {
+  const voyage = read('bapa-voyage.js');
+  const css = read('bapa.css');
+  assert.match(voyage, /function resetVoyageChrome\(/);
+  assert.match(voyage, /if\(!modal\.open\)modal\.showModal\(\)/);
+  assert.doesNotMatch(voyage, /if\(modal\.open\)return/);
+  assert.match(voyage, /if\(!box\|\|!window\.BAPATheater\)return/);
+  assert.match(voyage, /if\(!old\|\|!ministry\|\|!ship\)return/);
+  assert.match(css, /#bapa-ocean\.bapa-theater-open:has\(\.paper-stage\)/);
+  assert.match(css, /#bapa-ocean\.bapa-theater-open:has\(\.paper-stage\) \.bapa-nav/);
 });
 
 test('theater auto-guides to choices instead of resetting scroll to top', () => {

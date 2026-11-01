@@ -7,8 +7,9 @@
 .bapa-report-actions a{display:inline-flex;align-items:center;min-height:42px;box-sizing:border-box;border-radius:12px;border:1px solid #a6b896;background:#fff9e7;color:inherit;padding:10px;text-decoration:none;font-size:14px}.bapa-report-actions a:focus-visible{outline:3px solid #cbab55}
 
 /* BAPA paper theater */
-#bapa-ocean.bapa-theater-open{overflow:hidden;background:#1b2428}
-#bapa-ocean.bapa-theater-open .bapa-nav,#bapa-ocean.bapa-theater-open .bapa-stage{display:none}
+#bapa-ocean.bapa-theater-open:has(.paper-stage){overflow:hidden;background:#1b2428}
+#bapa-ocean.bapa-theater-open:has(.paper-stage) .bapa-nav,
+#bapa-ocean.bapa-theater-open:has(.paper-stage) .bapa-stage{display:none}
 .bapa-theater-wrap{height:100dvh}
 .bapa-theater-wrap[hidden]{display:none}
 .bapa-theater .bapa-scene{position:absolute;inset:0}

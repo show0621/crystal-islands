@@ -256,4 +256,5 @@ if(typeof renderSeason==='function'){
     dressPanel();
   };
 }
+window.TPHubBoot?.ready('ui');
 })();

@@ -57,14 +57,40 @@ dialog#modal:not(.paper-open) .paper-restore,
 dialog#modal:not(.paper-open) .paper-fold,
 dialog#modal:not(.paper-open) .paper-resize { display: none !important; }
 dialog#modal.hub-open {
-  position: fixed;
-  inset: auto;
-  transform: none;
-  margin: 0;
+  position: fixed !important;
+  inset: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  background: #fffdf6;
+  color: #294c43;
+  border: 1px solid #dce5d3;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 30px 120px #123c3b44;
 }
-dialog#modal.hub-open .modal-top { cursor: grab; }
+dialog#modal.hub-open .modal-top {
+  position: relative;
+  inset: auto;
+  cursor: grab;
+  touch-action: none;
+}
+dialog#modal.hub-open .modal-top > span {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  pointer-events: none;
+}
 dialog#modal.hub-open.is-dragging .modal-top { cursor: grabbing; }
 dialog#modal.hub-open.is-dragging { user-select: none; }
+dialog#modal.hub-open .paper-restore,
+dialog#modal.hub-open .paper-fold,
+dialog#modal.hub-open .paper-resize,
+dialog#modal.hub-open .diorama,
+dialog#modal.hub-open .actor-pop,
+dialog#modal.hub-open .book-cover { display: none !important; }
+dialog#modal.hub-open #modal-content { height: auto; max-height: calc(100% - 58px); overflow: auto; }
 dialog.paper-open .modal-top {
   position: absolute;
   top: 12px;

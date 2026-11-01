@@ -2,7 +2,7 @@
 window.ResidentChat={mount({id,k,r,d,t,rich,esc}){
  const host=document.querySelector('.resident-visit');if(!host)return;
  for(const sel of ['#resident-conversation','.resident-thread-status','#resident-questions','#resident-reply','#resident-next-person'])host.querySelector(sel)?.remove();
- const modal=document.querySelector('#modal');modal.classList.add('resident-dialog-open');
+ const modal=document.querySelector('#modal');modal.classList.add('resident-dialog-open');window.TPHubWindow?.refit(modal);
  const engine=ResidentDialogue,key=id+':'+k,storeKey='tp-resident-branches-v1';let book={};try{book=JSON.parse(localStorage.getItem(storeKey))||{}}catch{}
  let state=engine.normalize(book[key]);state.visits++;const [other,slot]=d[7].split(':').map(Number),ctx={id,k,r,d,hour:IslandClock.read().hour,other:IslandBiomes.residents[other][slot]};
  const profile=window.ResidentMinutes?.person(id,k);

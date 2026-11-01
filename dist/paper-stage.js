@@ -777,8 +777,24 @@
     if (typeof episodes === 'undefined') return null;
     return episodes.find(ep => label.includes(ep.title)) || null;
   }
-  function isIslandVisit(root) {
-    return !!root?.querySelector?.('.resident-visit, .pet-story');
+  function visitLabel(title) {
+    return title || document.getElementById('modal-label')?.textContent || '';
+  }
+  function isIslandVisit(root, title) {
+    if (root?.querySelector?.('.resident-visit, .pet-story, .island-visit, .resident-free-chat')) return true;
+    const label = visitLabel(title);
+    if (/小小約定|小花|橘丸|VIRTUAL RESIDENT/.test(label)) return true;
+    // Island person titles look like「國稅查核島 · 阿芬」, never a case tool.
+    return /島/.test(label) && /·/.test(label) && !/案件|證據|推理|提示|依據|筆錄|結案|交卷|規範|會議紀錄/.test(label);
+  }
+  function unwrapPaperStage(modal) {
+    const content = document.getElementById('modal-content');
+    const keep = content?.querySelector('.resident-visit, .pet-story, .island-visit');
+    if (keep && keep.closest('.paper-stage')) {
+      content.replaceChildren(keep);
+    }
+    modal?.classList.remove('paper-open', 'is-collapsed');
+    modal?.querySelectorAll('.paper-restore, .paper-fold, .paper-resize').forEach(node => node.remove());
   }
   function isCaseToolOverlay(root) {
     if (!liveScene) return false;
@@ -806,7 +822,7 @@
     const content = document.getElementById('modal-content');
     if (!modal || !content || content.querySelector('.paper-stage, .story-header')) return;
     // Island people / pets keep the ordinary visit card — never wrap them in paper theater.
-    if (isIslandVisit(content)) return;
+    if (isIslandVisit(content) || isIslandVisit(modal) || modal.classList.contains('hub-open')) return;
     const label = document.getElementById('modal-label')?.textContent || '';
     const journal = content.querySelector('.season-journal');
     const casePage = journal || content.querySelector('.evidence-bag, .detective-board, .full-authored-record, .learning-definition, .exam-hero, .story-result, .source-list, .letter-text, .report-answer, .transcript-list') || /證據|推理|提示|依據|筆錄|結案|交卷|案件|規範/.test(label);
@@ -1002,7 +1018,8 @@
     const modal = document.getElementById('modal');
     if (!modal) return;
     modal.classList.remove('paper-open', 'is-collapsed');
-    if (isIslandVisit(modal)) {
+    if (isIslandVisit(modal, title)) {
+      unwrapPaperStage(modal);
       armHubWindow(modal);
       return;
     }
@@ -1101,15 +1118,16 @@
     };
   }
   function applyCaseFrame(modal, frame) {
-    modal.style.position = 'fixed';
-    modal.style.margin = '0';
-    modal.style.inset = 'auto';
-    modal.style.right = 'auto';
-    modal.style.bottom = 'auto';
-    modal.style.width = frame.width + 'px';
-    modal.style.height = frame.height + 'px';
-    modal.style.left = frame.left + 'px';
-    modal.style.top = frame.top + 'px';
+    modal.style.setProperty('position', 'fixed', 'important');
+    modal.style.setProperty('margin', '0', 'important');
+    modal.style.setProperty('inset', 'auto', 'important');
+    modal.style.setProperty('right', 'auto', 'important');
+    modal.style.setProperty('bottom', 'auto', 'important');
+    modal.style.setProperty('transform', 'none', 'important');
+    modal.style.setProperty('width', frame.width + 'px', 'important');
+    modal.style.setProperty('height', frame.height + 'px', 'important');
+    modal.style.setProperty('left', frame.left + 'px', 'important');
+    modal.style.setProperty('top', frame.top + 'px', 'important');
   }
   function clampCaseWindow(modal) {
     const box = activeLimits(modal);
@@ -1128,15 +1146,24 @@
   }
   function clearCaseFrame(modal) {
     caseFramed = false;
-    modal.classList.remove('is-dragging', 'is-resizing', 'hub-open');
+    modal.classList.remove('is-dragging', 'is-resizing', 'hub-open', 'resident-dialog-open');
     ['position', 'margin', 'inset', 'left', 'top', 'right', 'bottom', 'width', 'height', 'transform'].forEach(prop => { modal.style[prop] = ''; });
   }
   function armHubWindow(modal) {
+    unwrapPaperStage(modal);
     modal.classList.add('hub-open');
     modal.classList.remove('paper-open', 'is-collapsed');
+    caseFramed = false;
     applyCaseFrame(modal, defaultHubFrame(modal));
+    clampCaseWindow(modal);
     armCaseWindow();
+    requestAnimationFrame(() => {
+      if (!modal.classList.contains('hub-open')) return;
+      applyCaseFrame(modal, defaultHubFrame(modal));
+      clampCaseWindow(modal);
+    });
   }
+  window.TPHubWindow = { refit(modal) { const box = modal || document.getElementById('modal'); if (box?.classList.contains('hub-open')) { applyCaseFrame(box, defaultHubFrame(box)); clampCaseWindow(box); } } };
   function armCaseWindow() {
     const modal = document.getElementById('modal');
     const theater = modal?.classList.contains('paper-open');
@@ -1196,49 +1223,52 @@
       const cover = theaterNow ? event.target.closest('.book-cover') : null;
       const bar = hubNow ? event.target.closest('.modal-top') : null;
       if (!handle && !cover && !bar) return;
-      if (event.target.closest('button, a, input, textarea, select')) return;
+      if (event.target.closest('#close-modal, .paper-restore, .paper-fold, .paper-resize, a, input, textarea, select')) return;
       event.preventDefault();
-      const rect = modal.getBoundingClientRect();
+      const visual = modal.getBoundingClientRect();
+      applyCaseFrame(modal, { width: visual.width, height: visual.height, left: visual.left, top: visual.top });
       drag = {
         kind: handle ? 'resize' : 'move',
         pointer: event.pointerId,
         x: event.clientX,
         y: event.clientY,
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height
+        left: visual.left,
+        top: visual.top,
+        width: visual.width,
+        height: visual.height
       };
       modal.classList.toggle('is-resizing', !!handle);
       modal.classList.toggle('is-dragging', !handle);
-      modal.setPointerCapture(event.pointerId);
+      const move = ev => {
+        if (!drag || ev.pointerId !== drag.pointer) return;
+        const box = activeLimits(modal);
+        if (drag.kind === 'move') {
+          let left = drag.left + (ev.clientX - drag.x);
+          let top = drag.top + (ev.clientY - drag.y);
+          left = Math.min(Math.max(box.margin, left), Math.max(box.margin, window.innerWidth - drag.width - box.margin));
+          top = Math.min(Math.max(box.margin, top), Math.max(box.margin, window.innerHeight - drag.height - box.margin));
+          applyCaseFrame(modal, { width: drag.width, height: drag.height, left, top });
+          return;
+        }
+        let width = Math.max(box.minW, Math.min(drag.width + (ev.clientX - drag.x), box.maxW));
+        let height = Math.max(box.minH, Math.min(drag.height + (ev.clientY - drag.y), box.maxH));
+        if (drag.left + width > window.innerWidth - box.margin) width = Math.max(box.minW, window.innerWidth - box.margin - drag.left);
+        if (drag.top + height > window.innerHeight - box.margin) height = Math.max(box.minH, window.innerHeight - box.margin - drag.top);
+        applyCaseFrame(modal, { width, height, left: drag.left, top: drag.top });
+      };
+      const up = ev => {
+        if (!drag || ev.pointerId !== drag.pointer) return;
+        drag = null;
+        modal.classList.remove('is-dragging', 'is-resizing');
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+      try { modal.setPointerCapture(event.pointerId); } catch {}
     });
-    modal.addEventListener('pointermove', event => {
-      if (!drag || event.pointerId !== drag.pointer) return;
-      const box = activeLimits(modal);
-      if (drag.kind === 'move') {
-        let left = drag.left + (event.clientX - drag.x);
-        let top = drag.top + (event.clientY - drag.y);
-        left = Math.min(Math.max(box.margin, left), Math.max(box.margin, window.innerWidth - drag.width - box.margin));
-        top = Math.min(Math.max(box.margin, top), Math.max(box.margin, window.innerHeight - drag.height - box.margin));
-        modal.style.left = left + 'px';
-        modal.style.top = top + 'px';
-        return;
-      }
-      let width = Math.max(box.minW, Math.min(drag.width + (event.clientX - drag.x), box.maxW));
-      let height = Math.max(box.minH, Math.min(drag.height + (event.clientY - drag.y), box.maxH));
-      if (drag.left + width > window.innerWidth - box.margin) width = Math.max(box.minW, window.innerWidth - box.margin - drag.left);
-      if (drag.top + height > window.innerHeight - box.margin) height = Math.max(box.minH, window.innerHeight - box.margin - drag.top);
-      modal.style.width = width + 'px';
-      modal.style.height = height + 'px';
-    });
-    const endDrag = event => {
-      if (!drag || (event && event.pointerId !== drag.pointer)) return;
-      drag = null;
-      modal.classList.remove('is-dragging', 'is-resizing');
-    };
-    modal.addEventListener('pointerup', endDrag);
-    modal.addEventListener('pointercancel', endDrag);
     window.addEventListener('resize', () => {
       if (modal.classList.contains('paper-open') || modal.classList.contains('hub-open')) clampCaseWindow(modal);
     });

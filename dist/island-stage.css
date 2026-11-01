@@ -31,8 +31,15 @@ body:not(.stage-page) .campaign-banner{
   left:16px!important;
   max-width:min(240px,26vw);
   gap:2px;
+  z-index:3;
 }
 body:not(.stage-page) .campaign-banner b{font-size:clamp(16px,1.7vw,22px)!important}
+/* Old weather chip sits in the same top-left slot as the season title. */
+body:not(.stage-page) .map-head,
+body:not(.stage-page) .weather{display:none!important}
+/* Zoomed-in island name replaces the banner; never stack both. */
+body:not(.stage-page) .map:has(#island-identity:not([hidden])) .campaign-banner{display:none!important}
+body:not(.stage-page) #island-identity{top:12px!important;left:16px!important;z-index:3}
 body:not(.stage-page) .scene-clock{
   left:50%!important;
   right:auto!important;

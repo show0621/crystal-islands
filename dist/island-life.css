@@ -16,6 +16,6 @@
 
 /* Fixed resident panel prevents recentering and backdrop blur recomposition. */
 #modal.resident-dialog-open{overflow-y:auto;scrollbar-gutter:stable;overflow-anchor:none;scroll-behavior:auto}
-#modal.resident-dialog-open.hub-open{inset:auto;transform:none}
+#modal.resident-dialog-open.hub-open{inset:auto!important;transform:none!important;margin:0!important}
 #modal.resident-dialog-open::backdrop{backdrop-filter:none;background:rgba(32,62,66,.58)}
 .resident-dialog-open .resident-branch-options{min-height:115px}.resident-dialog-open .resident-free-history{overflow-anchor:none}.resident-dialog-open .resident-conversation{contain:none}.resident-branch-options button:disabled.is-picked{opacity:1;cursor:default}

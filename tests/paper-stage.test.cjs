@@ -39,11 +39,16 @@ test('island people and pets stay outside paper theater', () => {
   const paper = read('paper-stage.js');
   const css = read('paper-stage.css');
   assert.match(paper, /function isIslandVisit\(/);
-  assert.match(paper, /resident-visit, \.pet-story/);
+  assert.match(paper, /resident-visit, \.pet-story, \.island-visit, \.resident-free-chat/);
+  assert.match(paper, /function unwrapPaperStage\(/);
   assert.match(paper, /function armHubWindow\(/);
   assert.match(paper, /hub-open/);
+  assert.match(paper, /window\.TPHubWindow/);
   assert.match(css, /dialog#modal:not\(\.paper-open\) \.paper-restore/);
+  assert.match(css, /dialog#modal\.hub-open \.diorama/);
   assert.match(read('island-3d.js'), /class="pet-story"/);
+  assert.match(read('island-3d.js'), /island-visit pet-story/);
+  assert.match(read('resident-chat.js'), /TPHubWindow\?\.refit/);
 });
 
 test('paper theater is wired ahead of the separate work-page launcher', () => {
@@ -108,4 +113,11 @@ test('every current episode and island has a paper set, without dropping newer c
   assert.match(read('rpg.js'), /bbformula:/);
   assert.doesNotMatch(read('world.js'), /Double Irish/);
   assert.match(read('world.js'), /原創案卷/);
+});
+
+test('hub season title does not share the top-left slot with the weather chip', () => {
+  const css = read('island-stage.css');
+  assert.match(css, /body:not\(\.stage-page\) \.map-head/);
+  assert.match(css, /body:not\(\.stage-page\) \.weather\{display:none!important\}/);
+  assert.match(css, /#island-identity:not\(\[hidden\]\)\) \.campaign-banner\{display:none!important\}/);
 });

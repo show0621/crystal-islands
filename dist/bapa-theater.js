@@ -39,13 +39,25 @@ function prefersReduceMotion() {
 function guideTo(node, { focus = true } = {}) {
   if (!node || !node.isConnected) return;
   const run = () => {
+    if (!node.isConnected) return;
+    const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
+    const scroller = target.closest?.('.paper-book')
+      || target.closest?.('.paper-side')
+      || document.scrollingElement;
+    const behavior = prefersReduceMotion() ? 'auto' : 'smooth';
     try {
-      node.scrollIntoView({
-        behavior: prefersReduceMotion() ? 'auto' : 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
-      });
-    } catch { /* ignore */ }
+      if (scroller && scroller !== document.body && scroller !== document.documentElement && scroller !== document.scrollingElement) {
+        const sRect = scroller.getBoundingClientRect();
+        const tRect = target.getBoundingClientRect();
+        const topPad = Math.min(80, Math.max(24, sRect.height * 0.08));
+        const next = scroller.scrollTop + (tRect.top - sRect.top) - topPad;
+        scroller.scrollTo({ top: Math.max(0, next), behavior });
+      } else {
+        target.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+      }
+    } catch {
+      try { target.scrollIntoView(true); } catch { /* ignore */ }
+    }
     const tray = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
     if (!tray) return;
     tray.classList.remove('is-attention');
@@ -168,14 +180,27 @@ function show(i) {
 }
 function advance() {
   if (!lines.length) return;
-  if (!lineDone) { clearInterval(typing); $('.paper-text').textContent = full; lineDone = true; if (lines[cursor].zh) $('.bapa-sub').hidden = false; if (cursor >= lines.length - 1) finish(); return; }
-  if (cursor < lines.length - 1) { cursor += 1; show(cursor); }
+  if (!lineDone) {
+    clearInterval(typing);
+    $('.paper-text').textContent = full;
+    lineDone = true;
+    if (lines[cursor].zh) $('.bapa-sub').hidden = false;
+    if (cursor >= lines.length - 1) finish();
+    else guideTo($('.paper-dialogue'), { focus: false });
+    return;
+  }
+  if (cursor < lines.length - 1) { cursor += 1; show(cursor); return; }
+  finish();
 }
 function finish() {
   $('.paper-stage').classList.add('is-ready');
   $('.paper-tray').classList.remove('is-waiting');
   const fn = after; after = null;
   fn?.();
+  const trayNode = $('.paper-tray');
+  if (trayNode && !trayNode.classList.contains('is-waiting') && trayNode.innerHTML.trim()) {
+    guideTo(trayNode.querySelector('.story-choices, button') || trayNode);
+  }
 }
 function tray(html) {
   const t = $('.paper-tray');

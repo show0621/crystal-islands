@@ -1414,12 +1414,6 @@ body.case-theater > :not(dialog) {
     padding: 10px 12px;
     font-size: 13px;
   }
-  .paper-stage.paper-play .paper-side > .paper-dialogue {
-    position: sticky;
-    top: 58px;
-    z-index: 4;
-    background: #fffdf8;
-  }
   .modal-top button {
     min-width: 44px;
     min-height: 44px;

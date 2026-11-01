@@ -15,17 +15,29 @@
   function prefersReduceMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
-  /** Jump the next action into view (choices / dialogue). Auto-scroll beats a plain hint for 防呆. */
+  /** Force the next action into view inside nested theater scrollers (paper-book / side). */
   function guideTo(node, { focus = true } = {}) {
     if (!node || !node.isConnected) return;
     const run = () => {
+      if (!node.isConnected) return;
+      const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
+      const scroller = target.closest?.('.paper-book')
+        || target.closest?.('.paper-side')
+        || document.scrollingElement;
+      const behavior = prefersReduceMotion() ? 'auto' : 'smooth';
       try {
-        node.scrollIntoView({
-          behavior: prefersReduceMotion() ? 'auto' : 'smooth',
-          block: 'nearest',
-          inline: 'nearest'
-        });
-      } catch { /* ignore */ }
+        if (scroller && scroller !== document.body && scroller !== document.documentElement && scroller !== document.scrollingElement) {
+          const sRect = scroller.getBoundingClientRect();
+          const tRect = target.getBoundingClientRect();
+          const topPad = Math.min(80, Math.max(24, sRect.height * 0.08));
+          const next = scroller.scrollTop + (tRect.top - sRect.top) - topPad;
+          scroller.scrollTo({ top: Math.max(0, next), behavior });
+        } else {
+          target.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+        }
+      } catch {
+        try { target.scrollIntoView(true); } catch { /* ignore */ }
+      }
       const tray = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
       if (!tray) return;
       tray.classList.remove('is-attention');
@@ -586,12 +598,22 @@
     let lineDone = false;
     let queueDone = false;
     let lastFeedback = '';
+    function revealAction() {
+      if (!queueDone) {
+        guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
+        return;
+      }
+      const action = tray.querySelector('.story-choices, .authored-questions, .contract-lines, button')
+        || slip.querySelector('button')
+        || tray;
+      guideTo(action, { focus: !!tray.querySelector('button') });
+    }
     function finishQueue() {
       queueDone = true;
       stage.classList.add('is-ready');
       tray.classList.remove('is-waiting');
       syncFeedback();
-      guideTo(tray.querySelector('.story-choices, .authored-questions, .contract-lines, button') || tray);
+      revealAction();
     }
     function showLine(index) {
       lineDone = false;
@@ -600,12 +622,20 @@
       say(lines[index], () => {
         lineDone = true;
         if (index >= lines.length - 1) finishQueue();
+        else guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
       });
     }
     function advance() {
-      if (!lineDone) { finishTyping(); lineDone = true; return; }
+      if (!lineDone) {
+        finishTyping();
+        lineDone = true;
+        if (cursor >= lines.length - 1) finishQueue();
+        else guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
+        return;
+      }
       if (cursor < lines.length - 1) { cursor += 1; showLine(cursor); return; }
       if (!queueDone) finishQueue();
+      else revealAction();
     }
     function syncFeedback() {
       if (!stage.isConnected) return;
@@ -620,6 +650,7 @@
       const ok = box.classList.contains('supported');
       tray.classList.toggle('is-waiting', ok);
       say({ who: '阿芬', role: ok ? '查核領隊' : '這個推論還接不上', text: paragraph });
+      guideTo(ok ? (stage.querySelector('.paper-dialogue') || slip) : (tray.querySelector('button') || stage.querySelector('.paper-dialogue')), { focus: !ok });
     }
     function dress(button) {
       if (!button || button.dataset.paperDressed) return;

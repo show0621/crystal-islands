@@ -777,13 +777,18 @@
     if (typeof episodes === 'undefined') return null;
     return episodes.find(ep => label.includes(ep.title)) || null;
   }
+  function isIslandVisit(root) {
+    return !!root?.querySelector?.('.resident-visit, .pet-story');
+  }
   function dressPages() {
     const modal = document.getElementById('modal');
     const content = document.getElementById('modal-content');
     if (!modal || !content || content.querySelector('.paper-stage, .story-header')) return;
+    // Island people / pets keep the ordinary visit card — never wrap them in paper theater.
+    if (isIslandVisit(content)) return;
     const label = document.getElementById('modal-label')?.textContent || '';
     const journal = content.querySelector('.season-journal');
-    const casePage = journal || content.querySelector('.evidence-bag, .detective-board, .full-authored-record, .learning-definition, .exam-hero, .story-result, .source-list, .letter-text, .report-answer, .transcript-list') || /證據|推理|提示|依據|筆錄|結案|查核|交卷|案件|規範/.test(label);
+    const casePage = journal || content.querySelector('.evidence-bag, .detective-board, .full-authored-record, .learning-definition, .exam-hero, .story-result, .source-list, .letter-text, .report-answer, .transcript-list') || /證據|推理|提示|依據|筆錄|結案|交卷|案件|規範/.test(label);
     if (!casePage) return;
     const found = episodeFromModal();
     const e = journal ? { id: 'shelf', title: '案件紀錄' } : (found || (typeof seasonEpisode === 'function' ? seasonEpisode() : null));
@@ -973,7 +978,14 @@
   const rawOpen = openModal;
   openModal = function (title, html) {
     rawOpen(title, html);
-    document.getElementById('modal')?.classList.remove('paper-open');
+    const modal = document.getElementById('modal');
+    if (!modal) return;
+    modal.classList.remove('paper-open', 'is-collapsed');
+    if (isIslandVisit(modal)) {
+      armHubWindow(modal);
+      return;
+    }
+    modal.classList.remove('hub-open');
     dressPages();
   };
   const rawStep = openCampaignStep;
@@ -1034,11 +1046,27 @@
   window.rewindStoryStep = rewindStoryStep;
   let caseFramed = false;
   let caseChrome = false;
-  function caseLimits() {
+  function caseLimits(kind = 'case') {
     const margin = 16;
     const maxW = Math.max(280, window.innerWidth - margin * 2);
     const maxH = Math.max(240, window.innerHeight - margin * 2);
+    if (kind === 'hub') return { margin, maxW, maxH, minW: Math.min(360, maxW), minH: Math.min(280, maxH) };
     return { margin, maxW, maxH, minW: Math.min(720, maxW), minH: Math.min(560, maxH) };
+  }
+  function activeLimits(modal) {
+    return caseLimits(modal?.classList.contains('hub-open') ? 'hub' : 'case');
+  }
+  function defaultHubFrame(modal) {
+    const box = caseLimits('hub');
+    const visit = modal.querySelector('.resident-visit');
+    const width = Math.max(box.minW, Math.min(visit ? 980 : 680, box.maxW));
+    const height = Math.max(box.minH, Math.min(visit ? Math.round(window.innerHeight * 0.86) : Math.round(window.innerHeight * 0.64), box.maxH));
+    return {
+      width,
+      height,
+      left: Math.max(box.margin, (window.innerWidth - width) / 2),
+      top: Math.max(box.margin, (window.innerHeight - height) / 2)
+    };
   }
   function defaultCaseFrame() {
     const box = caseLimits();
@@ -1063,7 +1091,7 @@
     modal.style.top = frame.top + 'px';
   }
   function clampCaseWindow(modal) {
-    const box = caseLimits();
+    const box = activeLimits(modal);
     let width = Math.max(box.minW, Math.min(modal.offsetWidth, box.maxW));
     let height = Math.max(box.minH, Math.min(modal.offsetHeight, box.maxH));
     let left = parseFloat(modal.style.left);
@@ -1079,61 +1107,75 @@
   }
   function clearCaseFrame(modal) {
     caseFramed = false;
-    modal.classList.remove('is-dragging', 'is-resizing');
-    ['position', 'margin', 'inset', 'left', 'top', 'right', 'bottom', 'width', 'height'].forEach(prop => { modal.style[prop] = ''; });
+    modal.classList.remove('is-dragging', 'is-resizing', 'hub-open');
+    ['position', 'margin', 'inset', 'left', 'top', 'right', 'bottom', 'width', 'height', 'transform'].forEach(prop => { modal.style[prop] = ''; });
+  }
+  function armHubWindow(modal) {
+    modal.classList.add('hub-open');
+    modal.classList.remove('paper-open', 'is-collapsed');
+    applyCaseFrame(modal, defaultHubFrame(modal));
+    armCaseWindow();
   }
   function armCaseWindow() {
     const modal = document.getElementById('modal');
-    if (!modal || !modal.classList.contains('paper-open')) return;
-    if (!modal.querySelector('.paper-restore')) {
-      const restore = document.createElement('button');
-      restore.type = 'button';
-      restore.className = 'paper-restore';
-      restore.textContent = '回復大小';
-      const fold = document.createElement('button');
-      fold.type = 'button';
-      fold.className = 'paper-fold';
-      fold.textContent = '收合';
-      fold.setAttribute('aria-label', '收合視窗');
-      fold.onclick = () => {
-        const closed = modal.classList.toggle('is-collapsed');
-        fold.textContent = closed ? '展開' : '收合';
-        fold.setAttribute('aria-label', closed ? '展開視窗' : '收合視窗');
-      };
-      modal.append(fold);
-      restore.setAttribute('aria-label', '回復大小');
-      const handle = document.createElement('button');
-      handle.type = 'button';
-      handle.className = 'paper-resize';
-      handle.setAttribute('aria-label', '拖曳調整視窗大小');
-      modal.append(restore, handle);
-    }
-    modal.classList.remove('is-collapsed');
-    const foldBtn = modal.querySelector('.paper-fold');
-    if (foldBtn) {
-      foldBtn.textContent = '收合';
-      foldBtn.setAttribute('aria-label', '收合視窗');
-    }
-    if (!caseFramed) {
-      applyCaseFrame(modal, defaultCaseFrame());
-      caseFramed = true;
-    } else {
-      clampCaseWindow(modal);
+    const theater = modal?.classList.contains('paper-open');
+    const hub = modal?.classList.contains('hub-open');
+    if (!modal || (!theater && !hub)) return;
+    if (theater) {
+      if (!modal.querySelector('.paper-restore')) {
+        const restore = document.createElement('button');
+        restore.type = 'button';
+        restore.className = 'paper-restore';
+        restore.textContent = '回復大小';
+        const fold = document.createElement('button');
+        fold.type = 'button';
+        fold.className = 'paper-fold';
+        fold.textContent = '收合';
+        fold.setAttribute('aria-label', '收合視窗');
+        fold.onclick = () => {
+          const closed = modal.classList.toggle('is-collapsed');
+          fold.textContent = closed ? '展開' : '收合';
+          fold.setAttribute('aria-label', closed ? '展開視窗' : '收合視窗');
+        };
+        modal.append(fold);
+        restore.setAttribute('aria-label', '回復大小');
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'paper-resize';
+        handle.setAttribute('aria-label', '拖曳調整視窗大小');
+        modal.append(restore, handle);
+      }
+      modal.classList.remove('is-collapsed');
+      const foldBtn = modal.querySelector('.paper-fold');
+      if (foldBtn) {
+        foldBtn.textContent = '收合';
+        foldBtn.setAttribute('aria-label', '收合視窗');
+      }
+      if (!caseFramed) {
+        applyCaseFrame(modal, defaultCaseFrame());
+        caseFramed = true;
+      } else {
+        clampCaseWindow(modal);
+      }
     }
     if (caseChrome) return;
     caseChrome = true;
     let drag = null;
     modal.addEventListener('pointerdown', event => {
-      if (!modal.classList.contains('paper-open') || event.button !== 0) return;
-      if (event.target.closest('.paper-restore')) {
+      if (event.button !== 0) return;
+      const theaterNow = modal.classList.contains('paper-open');
+      const hubNow = modal.classList.contains('hub-open');
+      if (!theaterNow && !hubNow) return;
+      if (theaterNow && event.target.closest('.paper-restore')) {
         event.preventDefault();
         applyCaseFrame(modal, defaultCaseFrame());
         return;
       }
-      const handle = event.target.closest('.paper-resize');
-      const cover = event.target.closest('.book-cover');
-      if (!handle && !cover) return;
-      if (cover && event.target.closest('button, a, input, textarea, select')) return;
+      const handle = theaterNow ? event.target.closest('.paper-resize') : null;
+      const cover = theaterNow ? event.target.closest('.book-cover') : null;
+      const bar = hubNow ? event.target.closest('.modal-top') : null;
+      if (!handle && !cover && !bar) return;
+      if (event.target.closest('button, a, input, textarea, select')) return;
       event.preventDefault();
       const rect = modal.getBoundingClientRect();
       drag = {
@@ -1152,7 +1194,7 @@
     });
     modal.addEventListener('pointermove', event => {
       if (!drag || event.pointerId !== drag.pointer) return;
-      const box = caseLimits();
+      const box = activeLimits(modal);
       if (drag.kind === 'move') {
         let left = drag.left + (event.clientX - drag.x);
         let top = drag.top + (event.clientY - drag.y);
@@ -1177,7 +1219,7 @@
     modal.addEventListener('pointerup', endDrag);
     modal.addEventListener('pointercancel', endDrag);
     window.addEventListener('resize', () => {
-      if (modal.classList.contains('paper-open')) clampCaseWindow(modal);
+      if (modal.classList.contains('paper-open') || modal.classList.contains('hub-open')) clampCaseWindow(modal);
     });
   }
   document.getElementById('modal')?.addEventListener('close', () => {

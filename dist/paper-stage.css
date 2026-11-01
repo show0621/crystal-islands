@@ -53,6 +53,18 @@ dialog#modal.paper-open .paper-resize {
   touch-action: none;
 }
 dialog.paper-open::backdrop { background: #1b2428b8; }
+dialog#modal:not(.paper-open) .paper-restore,
+dialog#modal:not(.paper-open) .paper-fold,
+dialog#modal:not(.paper-open) .paper-resize { display: none !important; }
+dialog#modal.hub-open {
+  position: fixed;
+  inset: auto;
+  transform: none;
+  margin: 0;
+}
+dialog#modal.hub-open .modal-top { cursor: grab; }
+dialog#modal.hub-open.is-dragging .modal-top { cursor: grabbing; }
+dialog#modal.hub-open.is-dragging { user-select: none; }
 dialog.paper-open .modal-top {
   position: absolute;
   top: 12px;

@@ -24,6 +24,17 @@ test('許澄 is retired and 阿芬 leads the audit cast', () => {
   assert.match(read('paper-stage.js'), /extra: 'afin'/);
 });
 
+test('island people and pets stay outside paper theater', () => {
+  const paper = read('paper-stage.js');
+  const css = read('paper-stage.css');
+  assert.match(paper, /function isIslandVisit\(/);
+  assert.match(paper, /resident-visit, \.pet-story/);
+  assert.match(paper, /function armHubWindow\(/);
+  assert.match(paper, /hub-open/);
+  assert.match(css, /dialog#modal:not\(\.paper-open\) \.paper-restore/);
+  assert.match(read('island-3d.js'), /class="pet-story"/);
+});
+
 test('paper theater is wired ahead of the separate work-page launcher', () => {
   const html = read('index.html');
   assert.ok(html.includes('paper-stage.css'));

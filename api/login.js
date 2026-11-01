@@ -18,25 +18,27 @@ function signToken(user, secret, ttlSec = 60 * 60 * 24 * 7) {
   return `${payload}.${sig}`;
 }
 
-function readBody(req) {
+function readStream(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data', (c) => chunks.push(c));
-    req.on('end', () => {
-      try {
-        const raw = Buffer.concat(chunks).toString('utf8');
-        const type = String(req.headers['content-type'] || '');
-        if (type.includes('application/json')) resolve(JSON.parse(raw || '{}'));
-        else {
-          const params = new URLSearchParams(raw);
-          resolve(Object.fromEntries(params.entries()));
-        }
-      } catch (err) {
-        reject(err);
-      }
-    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     req.on('error', reject);
   });
+}
+
+async function parseBody(req) {
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+    return req.body;
+  }
+  if (typeof req.body === 'string' && req.body) {
+    try { return JSON.parse(req.body); } catch { /* fall through */ }
+  }
+  const raw = typeof req.body === 'string' ? req.body : await readStream(req);
+  if (!raw) return {};
+  const type = String(req.headers['content-type'] || '');
+  if (type.includes('application/json')) return JSON.parse(raw);
+  return Object.fromEntries(new URLSearchParams(raw).entries());
 }
 
 module.exports = async function handler(req, res) {
@@ -61,7 +63,7 @@ module.exports = async function handler(req, res) {
 
   let body;
   try {
-    body = await readBody(req);
+    body = await parseBody(req);
   } catch {
     res.statusCode = 400;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

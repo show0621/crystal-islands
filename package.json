@@ -1,0 +1,1 @@
+{"name":"crystal-islands","version":"1.0.0","private":true,"description":"晶島物語：虛構企業TP偵探學習島","scripts":{"start":"node scripts/serve.mjs","dev":"node scripts/serve.mjs","test":"node --test tests/*.test.cjs","package":"python3 scripts/package.py"},"engines":{"node":">=18"}}

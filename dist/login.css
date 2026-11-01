@@ -110,10 +110,3 @@ button[type="submit"]:disabled {
   font-size: 13px;
   line-height: 1.5;
 }
-
-.note {
-  margin: 16px 0 0;
-  color: #8a9788;
-  font-size: 11px;
-  line-height: 1.6;
-}

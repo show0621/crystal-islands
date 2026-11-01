@@ -64,7 +64,7 @@ body:not(.stage-page) .explorer>#island-panel .active-case-subtitle{font-size:11
 body:not(.stage-page) .explorer>#island-panel .single-objective{margin:8px 0!important;padding:8px!important}
 body:not(.stage-page) .explorer>#island-panel .single-objective b{font-size:13px!important}
 body:not(.stage-page) .explorer>#island-panel .case-number{margin:6px 0 2px!important}
-body:not(.stage-page) .explorer>#island-panel button{font-size:11px!important;padding:7px!important;min-height:32px!important}
+body:not(.stage-page) .explorer>#island-panel button:not(.dossier-fold){font-size:11px!important;padding:7px!important;min-height:32px!important}
 
 /* Hub: pull the sea up under a short header, and let the page scroll to the scene tools. */
 body:not(.stage-page)>header{
@@ -192,23 +192,54 @@ body:not(.stage-page) .explorer>#island-panel .single-objective p{font-size:10px
 body:not(.stage-page) .explorer>#island-panel button.primary{font-size:11px!important;padding:8px 10px!important;min-height:34px!important;border-radius:999px}
 body:not(.stage-page) .explorer>#island-panel .season-hint-link{font-size:10px!important;margin:6px 0 2px!important}
 body:not(.stage-page) .explorer>#island-panel .season-save{font-size:8px!important;display:block;margin-top:4px}
-.dossier-bar{display:flex;align-items:center;gap:6px;margin:0 0 6px;cursor:grab;user-select:none;touch-action:none}
+.dossier-bar{display:flex;align-items:center;gap:6px;margin:0 0 6px;cursor:grab;user-select:none;touch-action:none;min-height:28px}
 .dossier-bar b{font-size:10px;letter-spacing:.12em;color:#5d735f!important}
 .dossier-hint{margin-right:auto;font-size:8px;color:#8a9a84!important;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dossier-fold{width:24px;height:24px;min-height:24px!important;padding:0!important;border:1px solid #c9d4bc;border-radius:50%;background:#fff;color:#35594d!important;font-weight:800;flex:0 0 auto}
+#island-panel .dossier-fold,
+body:not(.stage-page) .explorer>#island-panel .dossier-fold{
+  box-sizing:border-box!important;
+  width:24px!important;
+  height:24px!important;
+  min-width:24px!important;
+  min-height:24px!important;
+  max-width:24px!important;
+  max-height:24px!important;
+  padding:0!important;
+  margin:0!important;
+  line-height:22px!important;
+  border:1px solid #c9d4bc!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#35594d!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  flex:0 0 24px!important;
+  aspect-ratio:1/1!important;
+  display:inline-grid!important;
+  place-items:center!important;
+}
 .dossier-resize{
   position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;
   border-right:3px solid #7d9a86;border-bottom:3px solid #7d9a86;border-radius:0 0 8px 0;opacity:.85;z-index:2;
 }
 .dossier-resize-x{
-  position:absolute;top:28px;right:0;bottom:22px;width:10px;cursor:ew-resize;touch-action:none;z-index:2;
+  position:absolute;top:28px;right:0;bottom:22px;width:12px;cursor:ew-resize;touch-action:none;z-index:2;
 }
 .dossier-resize-x:after{
-  content:'';position:absolute;top:50%;right:2px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
+  content:'';position:absolute;top:50%;right:3px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
 }
-#island-panel.is-collapsed{height:auto!important;max-height:none!important;overflow:hidden!important;padding-bottom:8px!important}
+#island-panel.is-collapsed{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  padding:8px 10px!important;
+}
 #island-panel.is-collapsed>:not(.dossier-bar){display:none!important}
-#island-panel.is-collapsed .dossier-hint,#island-panel.is-collapsed .dossier-resize,#island-panel.is-collapsed .dossier-resize-x{display:none!important}
+#island-panel.is-collapsed .dossier-hint,
+#island-panel.is-collapsed .dossier-resize,
+#island-panel.is-collapsed .dossier-resize-x{display:none!important}
+#island-panel.is-collapsed .dossier-bar{margin:0}
 #enter-island{display:none!important}
 body:not(.stage-page) #district.island-open{display:block!important;position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:28px 22px 72px;background:#f6f3ea;color:#35594d}.process-observation{scroll-margin-top:76px}
 

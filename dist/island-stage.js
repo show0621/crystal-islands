@@ -58,17 +58,24 @@ function setImp(el,name,value){
   if(value==null||value==='')el.style.removeProperty(name);
   else el.style.setProperty(name,value,'important');
 }
-function applyBox(box){
+function applyBox(box,{keepHeight=true}={}){
   if(!panel||!box)return;
   panel.classList.add('is-user-sized');
+  // Pin the left edge so width always grows left → right.
   setImp(panel,'position','fixed');
   setImp(panel,'right','auto');
   setImp(panel,'bottom','auto');
+  setImp(panel,'left',Math.round(box.l)+'px');
+  setImp(panel,'top',Math.round(box.t)+'px');
   setImp(panel,'margin','0');
-  if(box.w){setImp(panel,'width',box.w+'px');setImp(panel,'max-width','none');}
-  if(box.h){setImp(panel,'height',box.h+'px');setImp(panel,'max-height','none');}
-  if(Number.isFinite(box.l))setImp(panel,'left',box.l+'px');
-  if(Number.isFinite(box.t))setImp(panel,'top',box.t+'px');
+  if(box.w){
+    setImp(panel,'width',Math.round(box.w)+'px');
+    setImp(panel,'max-width','none');
+  }
+  if(keepHeight&&box.h){
+    setImp(panel,'height',Math.round(box.h)+'px');
+    setImp(panel,'max-height','none');
+  }
 }
 function snapshotBox(){
   const r=panel.getBoundingClientRect();
@@ -79,16 +86,16 @@ function dressPanel(){
   if(!panel.querySelector('.dossier-bar')){
     const bar=document.createElement('div');
     bar.className='dossier-bar';
-    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 右下角調寬</small><button type="button" class="dossier-fold" aria-label="收合案卷">–</button>';
+    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 右邊拉寬</small><button type="button" class="dossier-fold" aria-label="收合案卷">–</button>';
     panel.prepend(bar);
     const grip=document.createElement('i');
     grip.className='dossier-resize';
-    grip.title='拖曳調整寬高';
+    grip.title='拖曳調整寬高（向右加寬）';
     grip.setAttribute('aria-hidden','true');
     panel.append(grip);
     const edge=document.createElement('i');
     edge.className='dossier-resize-x';
-    edge.title='拖曳調整寬度';
+    edge.title='向右拖曳加寬';
     edge.setAttribute('aria-hidden','true');
     panel.append(edge);
     bar.querySelector('.dossier-fold').onclick=event=>{
@@ -96,19 +103,31 @@ function dressPanel(){
       const closed=panel.classList.toggle('is-collapsed');
       event.currentTarget.textContent=closed?'＋':'–';
       event.currentTarget.setAttribute('aria-label',closed?'展開案卷':'收合案卷');
+      if(closed){
+        setImp(panel,'height','auto');
+        setImp(panel,'max-height','none');
+      }else{
+        const saved=readBox();
+        if(saved?.h){
+          setImp(panel,'height',saved.h+'px');
+          setImp(panel,'max-height','none');
+        }else setImp(panel,'height',null);
+      }
     };
     bar.addEventListener('pointerdown',event=>{
       if(event.target.closest('button'))return;
       event.preventDefault();
       const startX=event.clientX,startY=event.clientY;
       const rect=panel.getBoundingClientRect();
-      applyBox({w:rect.width,h:rect.height,l:rect.left,t:rect.top});
+      const origin={w:rect.width,h:rect.height,l:rect.left,t:rect.top};
+      applyBox(origin,{keepHeight:!panel.classList.contains('is-collapsed')});
       const move=ev=>{
         const w=panel.getBoundingClientRect().width;
         const maxL=window.innerWidth-w-8;
         const maxT=window.innerHeight-48;
-        setImp(panel,'left',Math.max(8,Math.min(maxL,rect.left+ev.clientX-startX))+'px');
-        setImp(panel,'top',Math.max(8,Math.min(maxT,rect.top+ev.clientY-startY))+'px');
+        setImp(panel,'left',Math.max(8,Math.min(maxL,origin.l+ev.clientX-startX))+'px');
+        setImp(panel,'top',Math.max(8,Math.min(maxT,origin.t+ev.clientY-startY))+'px');
+        setImp(panel,'right','auto');
       };
       const up=()=>{
         window.removeEventListener('pointermove',move);
@@ -121,19 +140,27 @@ function dressPanel(){
     const startResize=(event,mode)=>{
       event.preventDefault();
       event.stopPropagation();
+      if(panel.classList.contains('is-collapsed'))return;
       const rect=panel.getBoundingClientRect();
-      applyBox({w:rect.width,h:rect.height,l:rect.left,t:rect.top});
-      const startX=event.clientX,startY=event.clientY,width=rect.width,height=rect.height;
+      // Lock left edge first; dragging the right handle only changes width.
+      const pinnedLeft=rect.left;
+      const pinnedTop=rect.top;
+      const startX=event.clientX,startY=event.clientY;
+      const startW=rect.width,startH=rect.height;
       const minW=160,minH=110;
+      applyBox({w:startW,h:startH,l:pinnedLeft,t:pinnedTop});
       const move=ev=>{
+        setImp(panel,'left',Math.round(pinnedLeft)+'px');
+        setImp(panel,'top',Math.round(pinnedTop)+'px');
+        setImp(panel,'right','auto');
         if(mode!=='y'){
-          const nextW=Math.max(minW,Math.min(window.innerWidth-24,width+ev.clientX-startX));
-          setImp(panel,'width',nextW+'px');
+          const nextW=Math.max(minW,Math.min(window.innerWidth-pinnedLeft-8,startW+(ev.clientX-startX)));
+          setImp(panel,'width',Math.round(nextW)+'px');
           setImp(panel,'max-width','none');
         }
         if(mode!=='x'){
-          const nextH=Math.max(minH,Math.min(window.innerHeight-24,height+ev.clientY-startY));
-          setImp(panel,'height',nextH+'px');
+          const nextH=Math.max(minH,Math.min(window.innerHeight-pinnedTop-8,startH+(ev.clientY-startY)));
+          setImp(panel,'height',Math.round(nextH)+'px');
           setImp(panel,'max-height','none');
         }
       };
@@ -149,7 +176,9 @@ function dressPanel(){
     edge.addEventListener('pointerdown',event=>startResize(event,'x'));
   }
   const saved=readBox();
-  if(saved&&!panel.classList.contains('is-user-sized'))applyBox(saved);
+  if(saved&&!panel.classList.contains('is-user-sized')){
+    applyBox(saved,{keepHeight:!panel.classList.contains('is-collapsed')});
+  }
 }
 if(panel){
   new MutationObserver(()=>dressPanel()).observe(panel,{childList:true});

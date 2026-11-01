@@ -51,6 +51,8 @@ test('paper play keeps a short mission rail and full brief in the case card', ()
   assert.match(paper, /missionHTML\(e, rec, s, aim/);
   assert.match(css, /"stage side"/);
   assert.match(css, /"brief side"/);
+  assert.match(css, /container-type:\s*inline-size/);
+  assert.match(css, /@container paper-play/);
 });
 
 test('BAPA theater and campaign case entry share left mission / right dialogue layout', () => {

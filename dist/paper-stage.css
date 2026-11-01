@@ -1047,26 +1047,7 @@ body.case-theater {
 body.case-theater > :not(dialog) {
   visibility: hidden;
 }
-.paper-stage.paper-play .paper-book {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.paper-stage.paper-play .diorama {
-  position: relative;
-  inset: auto;
-  flex: 1 1 320px;
-  min-height: 280px;
-  max-height: none;
-  height: auto;
-  overflow: hidden;
-}
 .paper-stage.paper-play .case-brief {
-  flex: 0 1 auto;
-  max-height: 28%;
-  overflow: auto;
-  margin: 8px 14px 0;
-  padding: 8px 12px;
   background: #fff8e6;
   border: 3px solid #3a2a1a;
   border-radius: 14px;
@@ -1156,11 +1137,16 @@ body.case-theater > :not(dialog) {
   width: auto;
   top: auto;
 }
-/* Two-page case window: left = stage + short mission, right = dialogue + choices. */
-.paper-stage.paper-play .paper-desk { padding: 18px 20px 24px; }
+/* Two-page case window: left = stage + short mission, right = dialogue + choices.
+   Stack only when the theater window itself is narrow (container), not just the browser chrome. */
+.paper-stage.paper-play .paper-desk {
+  padding: 18px 20px 24px;
+  container-type: inline-size;
+  container-name: paper-play;
+}
 .paper-stage.paper-play .paper-book {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
   grid-template-rows: 58px minmax(240px, 1fr) auto auto;
   grid-template-areas:
     "cover cover"
@@ -1170,6 +1156,7 @@ body.case-theater > :not(dialog) {
   margin: 0;
   height: min(820px, calc(100dvh - 36px));
   max-height: calc(100dvh - 24px);
+  min-height: 0;
 }
 .paper-stage.paper-play .paper-book > .case-brief {
   grid-area: brief;
@@ -1396,19 +1383,10 @@ body.case-theater > :not(dialog) {
   border-top: 3px dashed #d7c4a0;
   background: #f6ecd6;
 }
-@media (max-width: 900px) {
-  dialog#modal.paper-open,
-  #modal.paper-open {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-  }
-  .paper-stage.paper-play .paper-book {
+@container paper-play (max-width: 760px) {
+  .paper-book {
     grid-template-columns: minmax(0, 1fr);
-    /* Phone: stage → short mission → dialogue/choices → tools */
+    /* Narrow theater: stage → short mission → dialogue/choices → tools */
     grid-template-rows: 58px min(38vw, 200px) max-content max-content auto;
     grid-template-areas: "cover" "stage" "brief" "side" "tools";
     height: auto;
@@ -1418,29 +1396,42 @@ body.case-theater > :not(dialog) {
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  .paper-stage.paper-play .book-cover { position: sticky; top: 0; z-index: 6; }
-  .paper-stage.paper-play .paper-book > .case-brief {
+  .book-cover { position: sticky; top: 0; z-index: 6; }
+  .paper-book > .case-brief {
     margin: 8px 10px 0;
     max-height: none;
     overflow: visible;
   }
-  .paper-stage.paper-play .diorama { margin: 10px 10px 0; min-height: 0; }
-  .paper-stage.paper-play .actor-pop { right: 18%; height: 50%; }
-  .paper-stage.paper-play.has-guest .actor-host { left: 42%; height: 46%; }
-  .paper-stage.paper-play.has-guest .actor-guest { right: 16%; height: 50%; }
-  .paper-stage.paper-play .paper-side { margin: 10px; overflow: visible; }
-  .paper-stage.paper-play .stage-clue { width: 104px; height: 132px; }
-  .paper-stage.paper-play .paper-desk { padding: max(10px, env(safe-area-inset-top, 0px)) 10px max(18px, env(safe-area-inset-bottom, 0px)); }
-  .paper-stage.paper-play .paper-book > .paper-tools {
+  .diorama { margin: 10px 10px 0; min-height: 0; }
+  .actor-pop { right: 18%; height: 50%; }
+  .has-guest .actor-host { left: 42%; height: 46%; }
+  .has-guest .actor-guest { right: 16%; height: 50%; }
+  .paper-side { margin: 10px; overflow: visible; }
+  .stage-clue { width: 104px; height: 132px; }
+  .paper-book > .paper-tools {
     position: sticky;
     bottom: 0;
     z-index: 5;
     padding: 10px 12px max(12px, env(safe-area-inset-bottom, 0px));
   }
-  .paper-stage.paper-play .paper-tools button {
+  .paper-tools button {
     min-height: 44px;
     padding: 10px 12px;
     font-size: 13px;
+  }
+}
+@media (max-width: 760px) {
+  dialog#modal.paper-open,
+  #modal.paper-open {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  .paper-stage.paper-play .paper-desk {
+    padding: max(10px, env(safe-area-inset-top, 0px)) 10px max(18px, env(safe-area-inset-bottom, 0px));
   }
   .modal-top button {
     min-width: 44px;

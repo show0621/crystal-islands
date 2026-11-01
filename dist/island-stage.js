@@ -72,21 +72,55 @@ function applyBox(box,{keepHeight=true}={}){
     setImp(panel,'width',Math.round(box.w)+'px');
     setImp(panel,'max-width','none');
   }
-  if(keepHeight&&box.h){
+  if(keepHeight&&box.h&&!panel.classList.contains('is-collapsed')){
     setImp(panel,'height',Math.round(box.h)+'px');
     setImp(panel,'max-height','none');
   }
 }
 function snapshotBox(){
   const r=panel.getBoundingClientRect();
-  return {w:Math.round(r.width),h:Math.round(r.height),l:Math.round(r.left),t:Math.round(r.top)};
+  const prev=readBox()||{};
+  const box={w:Math.round(r.width),l:Math.round(r.left),t:Math.round(r.top),collapsed:panel.classList.contains('is-collapsed')};
+  // Keep the expanded height while collapsed so restore still works.
+  box.h=panel.classList.contains('is-collapsed')&&prev.h?prev.h:Math.round(r.height);
+  return box;
+}
+function collapsePanel(closed){
+  const fold=panel.querySelector('.dossier-fold');
+  panel.classList.toggle('is-collapsed',closed);
+  if(fold){
+    fold.textContent=closed?'＋':'–';
+    fold.setAttribute('aria-label',closed?'展開案卷':'收合案卷');
+  }
+  if(closed){
+    // Drop the locked pixel height so the card really shrinks to the title bar.
+    panel.style.removeProperty('height');
+    setImp(panel,'height','fit-content');
+    setImp(panel,'min-height','0');
+    setImp(panel,'max-height','52px');
+  }else{
+    const saved=readBox();
+    panel.style.removeProperty('max-height');
+    setImp(panel,'min-height',null);
+    if(saved?.h){
+      setImp(panel,'height',saved.h+'px');
+      setImp(panel,'max-height','none');
+    }else{
+      setImp(panel,'height',null);
+      setImp(panel,'max-height',null);
+    }
+  }
+  const box=snapshotBox();
+  box.collapsed=closed;
+  writeBox(box);
 }
 function dressPanel(){
   if(!panel)return;
   if(!panel.querySelector('.dossier-bar')){
     const bar=document.createElement('div');
     bar.className='dossier-bar';
-    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 右邊拉寬</small><button type="button" class="dossier-fold" aria-label="收合案卷">–</button>';
+    // Use a span, not <button>, so global button min-height rules cannot squash it into an oval.
+    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 右邊拉寬</small><span class="dossier-fold" role="button" tabindex="0" aria-label="收合案卷">–</span>';
     panel.prepend(bar);
     const grip=document.createElement('i');
     grip.className='dossier-resize';
@@ -98,24 +132,18 @@ function dressPanel(){
     edge.title='向右拖曳加寬';
     edge.setAttribute('aria-hidden','true');
     panel.append(edge);
-    bar.querySelector('.dossier-fold').onclick=event=>{
+    const fold=bar.querySelector('.dossier-fold');
+    const toggle=event=>{
+      event.preventDefault();
       event.stopPropagation();
-      const closed=panel.classList.toggle('is-collapsed');
-      event.currentTarget.textContent=closed?'＋':'–';
-      event.currentTarget.setAttribute('aria-label',closed?'展開案卷':'收合案卷');
-      if(closed){
-        setImp(panel,'height','auto');
-        setImp(panel,'max-height','none');
-      }else{
-        const saved=readBox();
-        if(saved?.h){
-          setImp(panel,'height',saved.h+'px');
-          setImp(panel,'max-height','none');
-        }else setImp(panel,'height',null);
-      }
+      collapsePanel(!panel.classList.contains('is-collapsed'));
     };
+    fold.addEventListener('click',toggle);
+    fold.addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' ')toggle(event);
+    });
     bar.addEventListener('pointerdown',event=>{
-      if(event.target.closest('button'))return;
+      if(event.target.closest('.dossier-fold'))return;
       event.preventDefault();
       const startX=event.clientX,startY=event.clientY;
       const rect=panel.getBoundingClientRect();
@@ -176,8 +204,16 @@ function dressPanel(){
     edge.addEventListener('pointerdown',event=>startResize(event,'x'));
   }
   const saved=readBox();
-  if(saved&&!panel.classList.contains('is-user-sized')){
-    applyBox(saved,{keepHeight:!panel.classList.contains('is-collapsed')});
+  if(saved){
+    if(!panel.classList.contains('is-user-sized'))applyBox(saved,{keepHeight:!saved.collapsed});
+    if(saved.collapsed)collapsePanel(true);
+    else{
+      const fold=panel.querySelector('.dossier-fold');
+      if(fold&&!panel.classList.contains('is-collapsed')){
+        fold.textContent='–';
+        fold.setAttribute('aria-label','收合案卷');
+      }
+    }
   }
 }
 if(panel){

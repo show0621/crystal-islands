@@ -195,29 +195,29 @@ body:not(.stage-page) .explorer>#island-panel .season-save{font-size:8px!importa
 .dossier-bar{display:flex;align-items:center;gap:6px;margin:0 0 6px;cursor:grab;user-select:none;touch-action:none;min-height:28px}
 .dossier-bar b{font-size:10px;letter-spacing:.12em;color:#5d735f!important}
 .dossier-hint{margin-right:auto;font-size:8px;color:#8a9a84!important;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#island-panel .dossier-fold,
-body:not(.stage-page) .explorer>#island-panel .dossier-fold{
-  box-sizing:border-box!important;
-  width:24px!important;
-  height:24px!important;
-  min-width:24px!important;
-  min-height:24px!important;
-  max-width:24px!important;
-  max-height:24px!important;
-  padding:0!important;
-  margin:0!important;
-  line-height:22px!important;
-  border:1px solid #c9d4bc!important;
-  border-radius:50%!important;
-  background:#fff!important;
-  color:#35594d!important;
-  font-size:14px!important;
-  font-weight:800!important;
-  flex:0 0 24px!important;
-  aspect-ratio:1/1!important;
-  display:inline-grid!important;
-  place-items:center!important;
+.dossier-fold{
+  box-sizing:border-box;
+  width:24px;
+  height:24px;
+  min-width:24px;
+  min-height:24px;
+  max-width:24px;
+  max-height:24px;
+  padding:0;
+  margin:0;
+  border:1px solid #c9d4bc;
+  border-radius:50%;
+  background:#fff;
+  color:#35594d;
+  font:800 14px/24px "Noto Sans TC",system-ui,sans-serif;
+  flex:0 0 24px;
+  aspect-ratio:1/1;
+  display:inline-grid;
+  place-items:center;
+  cursor:pointer;
+  user-select:none;
 }
+.dossier-fold:focus-visible{outline:3px solid #db983d;outline-offset:2px}
 .dossier-resize{
   position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;
   border-right:3px solid #7d9a86;border-bottom:3px solid #7d9a86;border-radius:0 0 8px 0;opacity:.85;z-index:2;
@@ -228,10 +228,12 @@ body:not(.stage-page) .explorer>#island-panel .dossier-fold{
 .dossier-resize-x:after{
   content:'';position:absolute;top:50%;right:3px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
 }
-#island-panel.is-collapsed{
-  height:auto!important;
+#island-panel.is-collapsed,
+body:not(.stage-page) .explorer>#island-panel.is-collapsed,
+body:not(.stage-page) .explorer>#island-panel.is-user-sized.is-collapsed{
+  height:fit-content!important;
   min-height:0!important;
-  max-height:none!important;
+  max-height:52px!important;
   overflow:hidden!important;
   padding:8px 10px!important;
 }

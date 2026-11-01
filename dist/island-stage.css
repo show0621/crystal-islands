@@ -219,14 +219,14 @@ body:not(.stage-page) .explorer>#island-panel .season-save{font-size:8px!importa
 }
 .dossier-fold:focus-visible{outline:3px solid #db983d;outline-offset:2px}
 .dossier-resize{
-  position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;
+  position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:ns-resize;touch-action:none;
   border-right:3px solid #7d9a86;border-bottom:3px solid #7d9a86;border-radius:0 0 8px 0;opacity:.85;z-index:2;
 }
 .dossier-resize-x{
-  position:absolute;top:28px;right:0;bottom:22px;width:12px;cursor:ew-resize;touch-action:none;z-index:2;
+  position:absolute;top:28px;left:0;bottom:22px;width:14px;cursor:ew-resize;touch-action:none;z-index:2;
 }
 .dossier-resize-x:after{
-  content:'';position:absolute;top:50%;right:3px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
+  content:'';position:absolute;top:50%;left:3px;width:3px;height:28px;margin-top:-14px;border-radius:2px;background:#7d9a8666;
 }
 #island-panel.is-collapsed,
 body:not(.stage-page) .explorer>#island-panel.is-collapsed,

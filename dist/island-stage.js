@@ -120,16 +120,16 @@ function dressPanel(){
     const bar=document.createElement('div');
     bar.className='dossier-bar';
     // Use a span, not <button>, so global button min-height rules cannot squash it into an oval.
-    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 右邊拉寬</small><span class="dossier-fold" role="button" tabindex="0" aria-label="收合案卷">–</span>';
+    bar.innerHTML='<b>案卷</b><small class="dossier-hint">可拖移 · 左邊調寬</small><span class="dossier-fold" role="button" tabindex="0" aria-label="收合案卷">–</span>';
     panel.prepend(bar);
     const grip=document.createElement('i');
     grip.className='dossier-resize';
-    grip.title='拖曳調整寬高（向右加寬）';
+    grip.title='拖曳調整高度；左邊可調寬';
     grip.setAttribute('aria-hidden','true');
     panel.append(grip);
     const edge=document.createElement('i');
     edge.className='dossier-resize-x';
-    edge.title='向右拖曳加寬';
+    edge.title='往左拉加寬，往右拉縮小';
     edge.setAttribute('aria-hidden','true');
     panel.append(edge);
     const fold=bar.querySelector('.dossier-fold');
@@ -170,21 +170,25 @@ function dressPanel(){
       event.stopPropagation();
       if(panel.classList.contains('is-collapsed'))return;
       const rect=panel.getBoundingClientRect();
-      // Lock left edge first; dragging the right handle only changes width.
-      const pinnedLeft=rect.left;
+      // Width handle is on the LEFT: keep the right edge fixed.
+      // Drag left ← expand; drag right → shrink.
+      const pinnedRight=rect.right;
       const pinnedTop=rect.top;
       const startX=event.clientX,startY=event.clientY;
       const startW=rect.width,startH=rect.height;
       const minW=160,minH=110;
-      applyBox({w:startW,h:startH,l:pinnedLeft,t:pinnedTop});
+      applyBox({w:startW,h:startH,l:rect.left,t:pinnedTop});
       const move=ev=>{
-        setImp(panel,'left',Math.round(pinnedLeft)+'px');
         setImp(panel,'top',Math.round(pinnedTop)+'px');
         setImp(panel,'right','auto');
         if(mode!=='y'){
-          const nextW=Math.max(minW,Math.min(window.innerWidth-pinnedLeft-8,startW+(ev.clientX-startX)));
+          const nextW=Math.max(minW,Math.min(pinnedRight-8,startW-(ev.clientX-startX)));
+          const nextL=pinnedRight-nextW;
+          setImp(panel,'left',Math.round(nextL)+'px');
           setImp(panel,'width',Math.round(nextW)+'px');
           setImp(panel,'max-width','none');
+        }else{
+          setImp(panel,'left',Math.round(rect.left)+'px');
         }
         if(mode!=='x'){
           const nextH=Math.max(minH,Math.min(window.innerHeight-pinnedTop-8,startH+(ev.clientY-startY)));
@@ -200,7 +204,8 @@ function dressPanel(){
       window.addEventListener('pointermove',move);
       window.addEventListener('pointerup',up);
     };
-    grip.addEventListener('pointerdown',event=>startResize(event,'xy'));
+    // Corner grip: height from bottom-right; width still from the left-edge logic when dragging diagonally.
+    grip.addEventListener('pointerdown',event=>startResize(event,'y'));
     edge.addEventListener('pointerdown',event=>startResize(event,'x'));
   }
   const saved=readBox();

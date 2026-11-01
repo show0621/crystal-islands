@@ -36,8 +36,18 @@ const $ = sel => el.querySelector(sel);
 function prefersReduceMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
-function guideTo(node, { focus = true } = {}) {
+const READ_PAUSE_MS = 4000;
+let guideTimer = 0;
+let pauseNextGuide = false;
+function clearGuideTimer() {
+  if (guideTimer) {
+    clearTimeout(guideTimer);
+    guideTimer = 0;
+  }
+}
+function guideTo(node, { focus = true, delay = 0 } = {}) {
   if (!node || !node.isConnected) return;
+  clearGuideTimer();
   const run = () => {
     if (!node.isConnected) return;
     const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
@@ -58,14 +68,21 @@ function guideTo(node, { focus = true } = {}) {
     } catch {
       try { target.scrollIntoView(true); } catch { /* ignore */ }
     }
-    const tray = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
-    if (!tray) return;
-    tray.classList.remove('is-attention');
-    void tray.offsetWidth;
-    tray.classList.add('is-attention');
-    tray.addEventListener('animationend', () => tray.classList.remove('is-attention'), { once: true });
-    if (focus) tray.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
+    const trayNode = node.classList?.contains('paper-tray') ? node : node.closest?.('.paper-tray');
+    if (!trayNode) return;
+    trayNode.classList.remove('is-attention');
+    void trayNode.offsetWidth;
+    trayNode.classList.add('is-attention');
+    trayNode.addEventListener('animationend', () => trayNode.classList.remove('is-attention'), { once: true });
+    if (focus) trayNode.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
   };
+  if (delay > 0) {
+    guideTimer = setTimeout(() => {
+      guideTimer = 0;
+      requestAnimationFrame(() => requestAnimationFrame(run));
+    }, delay);
+    return;
+  }
   requestAnimationFrame(() => requestAnimationFrame(run));
 }
 
@@ -156,6 +173,7 @@ function show(i) {
   $('.actor-host').classList.toggle('is-listening', foreign);
   $('.actor-guest').classList.toggle('is-listening', !foreign);
   const bubble = $('.paper-dialogue');
+  clearGuideTimer();
   guideTo(bubble, { focus: false });
   bubble.classList.remove('is-pop'); void bubble.offsetWidth; bubble.classList.add('is-pop');
   bubble.classList.toggle('is-foreign', foreign);
@@ -180,13 +198,13 @@ function show(i) {
 }
 function advance() {
   if (!lines.length) return;
+  clearGuideTimer();
   if (!lineDone) {
     clearInterval(typing);
     $('.paper-text').textContent = full;
     lineDone = true;
     if (lines[cursor].zh) $('.bapa-sub').hidden = false;
     if (cursor >= lines.length - 1) finish();
-    else guideTo($('.paper-dialogue'), { focus: false });
     return;
   }
   if (cursor < lines.length - 1) { cursor += 1; show(cursor); return; }
@@ -196,16 +214,18 @@ function finish() {
   $('.paper-stage').classList.add('is-ready');
   $('.paper-tray').classList.remove('is-waiting');
   const fn = after; after = null;
+  pauseNextGuide = true;
   fn?.();
-  const trayNode = $('.paper-tray');
-  if (trayNode && !trayNode.classList.contains('is-waiting') && trayNode.innerHTML.trim()) {
-    guideTo(trayNode.querySelector('.story-choices, button') || trayNode);
-  }
+  pauseNextGuide = false;
 }
 function tray(html) {
   const t = $('.paper-tray');
   t.innerHTML = html;
-  if (html) guideTo(t.querySelector('.story-choices, button') || t);
+  if (html) {
+    guideTo(t.querySelector('.story-choices, button') || t, {
+      delay: pauseNextGuide ? READ_PAUSE_MS : 0
+    });
+  }
   return t;
 }
 function slip(html) { const s = $('.paper-slip'); s.innerHTML = html; s.classList.toggle('is-open', !!html); }

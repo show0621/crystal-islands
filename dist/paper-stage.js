@@ -15,9 +15,19 @@
   function prefersReduceMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
+  /** Pause after a line finishes so readers can finish the text before the jump. */
+  const READ_PAUSE_MS = 4000;
+  let guideTimer = 0;
+  function clearGuideTimer() {
+    if (guideTimer) {
+      clearTimeout(guideTimer);
+      guideTimer = 0;
+    }
+  }
   /** Force the next action into view inside nested theater scrollers (paper-book / side). */
-  function guideTo(node, { focus = true } = {}) {
+  function guideTo(node, { focus = true, delay = 0 } = {}) {
     if (!node || !node.isConnected) return;
+    clearGuideTimer();
     const run = () => {
       if (!node.isConnected) return;
       const target = node.closest?.('.paper-tray, .paper-dialogue, .paper-side') || node;
@@ -46,6 +56,13 @@
       tray.addEventListener('animationend', () => tray.classList.remove('is-attention'), { once: true });
       if (focus) tray.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
     };
+    if (delay > 0) {
+      guideTimer = setTimeout(() => {
+        guideTimer = 0;
+        requestAnimationFrame(() => requestAnimationFrame(run));
+      }, delay);
+      return;
+    }
     requestAnimationFrame(() => requestAnimationFrame(run));
   }
   const CAST = {
@@ -598,7 +615,7 @@
     let lineDone = false;
     let queueDone = false;
     let lastFeedback = '';
-    function revealAction() {
+    function revealAction({ pause = false } = {}) {
       if (!queueDone) {
         guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
         return;
@@ -606,36 +623,37 @@
       const action = tray.querySelector('.story-choices, .authored-questions, .contract-lines, button')
         || slip.querySelector('button')
         || tray;
-      guideTo(action, { focus: !!tray.querySelector('button') });
+      guideTo(action, { focus: !!tray.querySelector('button'), delay: pause ? READ_PAUSE_MS : 0 });
     }
     function finishQueue() {
       queueDone = true;
       stage.classList.add('is-ready');
       tray.classList.remove('is-waiting');
       syncFeedback();
-      revealAction();
+      // Let the last line be read before jumping to choices.
+      revealAction({ pause: true });
     }
     function showLine(index) {
       lineDone = false;
       stage.classList.remove('is-ready');
+      clearGuideTimer();
       guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
       say(lines[index], () => {
         lineDone = true;
         if (index >= lines.length - 1) finishQueue();
-        else guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
       });
     }
     function advance() {
+      clearGuideTimer();
       if (!lineDone) {
         finishTyping();
         lineDone = true;
         if (cursor >= lines.length - 1) finishQueue();
-        else guideTo(stage.querySelector('.paper-dialogue'), { focus: false });
         return;
       }
       if (cursor < lines.length - 1) { cursor += 1; showLine(cursor); return; }
       if (!queueDone) finishQueue();
-      else revealAction();
+      else revealAction({ pause: false });
     }
     function syncFeedback() {
       if (!stage.isConnected) return;
@@ -650,7 +668,10 @@
       const ok = box.classList.contains('supported');
       tray.classList.toggle('is-waiting', ok);
       say({ who: '阿芬', role: ok ? '查核領隊' : '這個推論還接不上', text: paragraph });
-      guideTo(ok ? (stage.querySelector('.paper-dialogue') || slip) : (tray.querySelector('button') || stage.querySelector('.paper-dialogue')), { focus: !ok });
+      const target = ok
+        ? (stage.querySelector('.paper-dialogue') || slip)
+        : (tray.querySelector('button') || stage.querySelector('.paper-dialogue'));
+      guideTo(target, { focus: !ok, delay: READ_PAUSE_MS });
     }
     function dress(button) {
       if (!button || button.dataset.paperDressed) return;

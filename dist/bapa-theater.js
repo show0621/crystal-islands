@@ -253,15 +253,15 @@ function spoken(entry) {
 function storyHTML(s) {
   return esc(s).replace(/（中譯：([^）]+)）/g, '<small class="bapa-ending-zh">中譯｜$1</small>');
 }
-function log(who, text, zh) {
-  const speaker = TW_SIDE.has(who) ? `${who}｜臺方` : `${who}｜${c.country}代表`;
+function log(who, text, zh, role) {
+  const speaker = role === '內心獨白' ? `${who}｜內心獨白` : TW_SIDE.has(who) ? `${who}｜臺方` : `${who}｜${c.country}代表`;
   record.history.push({ speaker, text: zh ? `${text}\n（中譯）${zh}` : text });
 }
 
 function menuMission() {
   return `<p class="case-aim"><b>目前任務。</b>從右側選一案進入雙邊預先訂價協商；你是臺方代表團。</p>
     <p class="case-next"><b>完成後的下一步。</b>依爭點回應、密商與長官審查；可信度與緊張度會推向不同結局。</p>
-    <p class="case-person"><b>規則一句話。</b>好的回應靠證據與敢辯；差的回應跟著錯指令走。詳情開「案情卡」。</p>`;
+    <p class="case-person"><b>規則一句話。</b>${esc(G.CANON)}</p>`;
 }
 function missionHTML() {
   if (!c || !st) return menuMission();
@@ -292,13 +292,15 @@ function missionHTML() {
 function dossierHTML() {
   if (!c) {
     return `<p class="case-aim"><b>這裡在做什麼。</b>雙邊預先訂價協議（BAPA）是兩國主管機關在交易「發生之前」，先談好未來幾年的訂價方法、區間和關鍵假設。你是臺方代表團，對面是日本、義大利或荷蘭的主管機關代表。走廊與視訊那頭，審查會議會進來：召集人陸嚴要稅基，覆核官沈岸要依據。兩個人不會說同一句話。</p>
-      <p class="case-person"><b>怎麼玩。</b>每一回合對方會提出一個真實的爭點，你從幾種回應裡選一種。中間會插入<b>代表團密商</b>與<b>內部長官審查會議</b>。審查會上有人對、有人錯：阿芬或小查會捍衛查得到的範圍，王衡可能把功能說滿；陸嚴會咄咄相逼，沈岸會幫對的人緩頰。好的回應靠證據、敢跟對的同仁一起辯駁長官；差的回應跟著錯誤指令走，或堅持錯的想法。你的選擇會改變<b>論證可信度</b>、<b>會場緊張度</b>和<b>對方最後願意接受的數字</b>，並走向不同的平行結局。</p>
+      <p class="case-person"><b>怎麼玩。</b>每一回合對方會提出一個真實的爭點，攻防會激烈、會半真半假。你從幾種回應裡選一種。中間會插入<b>休息密商</b>與<b>內部長官審查會議</b>：休息時要想對方的 TPG 哪一句是真的、哪一句過滿，怎麼用查核和舉證突破，又怎麼在不離指引的前提下防禦。審查會上有人對、有人錯：阿芬或小查會捍衛查得到的範圍，王衡可能把功能說滿；陸嚴會咄咄相逼，沈岸會幫對的人緩頰。好的回應靠證據、敢跟對的同仁一起辯駁長官；差的回應跟著錯誤指令走，或堅持錯的想法。你的選擇會改變<b>論證可信度</b>、<b>會場緊張度</b>和<b>對方最後願意接受的數字</b>，並走向不同的平行結局。</p>
+      <p><b>攻防規則。</b>${esc(G.CANON)}</p>
       <p><b>為什麼難。</b>功能、風險與貢獻往往只能證明到一半：工單證明執行，不一定證明控制；提案被採用，不一定證明獨特。外方本部在看他們的代表會不會讓太多；陸嚴在看稅基，沈岸在看你們會不會把沒查完的部分寫成已確認。外方代表說原文，下方附中譯。</p>`;
   }
   const s = G.scripts[c.id];
   const r = st && (st.phase === 'round' || st.phase === 'crisis') ? G.round(st) : null;
   return `<p class="case-aim"><b>案情。</b>${esc(c.background)}</p>
     <p class="case-person"><b>這場在吵什麼。</b>${esc(s.plain)}</p>
+    <p><b>攻防規則。</b>${esc(G.CANON)}</p>
     <p><b>為什麼難。</b>${esc(s.hard)}</p>
     <p><b>單位。</b>${esc(c.unit)}；金額為新臺幣千元，全部為虛構教學數據。</p>
     <p><b>開場。</b>臺 ${pct(c.openingTW)}｜${esc(c.country)} ${pct(c.openingOther)}；證據區間 ${pct(c.min)}–${pct(c.max)}。</p>
@@ -378,8 +380,8 @@ function briefing() {
   const open = s.lang === 'ja'
     ? { lang: 'ja', o: `本日はよろしくお願いいたします。日本側の当初提案は、${pct(c.openingOther)}でございます。証拠に基づいて、議論させていただきます。`, zh: `今天請多指教。日方的開場提案是 ${pct(c.openingOther)}（${c.unit}）。我們會以證據為本來討論。` }
     : { lang: 'en', o: `Good morning. Our opening position is ${pct(c.openingOther)}. We'll defend it with evidence, and we expect you to do the same.`, zh: `早安。我方開場立場是 ${pct(c.openingOther)}（${c.unit}）。我們會用證據捍衛它，也希望貴方一樣。` };
-  const list = [say('旁白', c.background, '案情'), ...s.opening.map(([w, t]) => say(w, t)), foreignLine(open), say('阿芬', `臺方開場提案 ${pct(c.openingTW)}。我們的理由，會在每一個爭點上逐一說明。`)];
-  list.forEach(l => l.zh ? log(l.who, l.text, l.zh) : l.who !== '旁白' && log(l.who, l.text));
+  const list = [say('旁白', c.background, '案情'), ...s.opening.map(entry => spoken(entry)), foreignLine(open), say('阿芬', `臺方開場提案 ${pct(c.openingTW)}。我們的理由，會在每一個爭點上逐一說明。`)];
+  list.forEach(l => l.zh ? log(l.who, l.text, l.zh, l.role) : l.who !== '旁白' && log(l.who, l.text, null, l.role));
   opts.save(record);
   setTimeout(() => { if (el.isConnected && c) openCaseCard(true); }, 450);
   play(list, () => {
@@ -392,19 +394,19 @@ function playRound() {
   const { round, line } = G.enter(st);
   opts.save(record);
   const rounds = G.scripts[c.id].rounds.length;
-  stamp(st.phase === 'crisis' ? '!' : String(st.at + 1), st.phase === 'crisis' ? '危機' : round.kind === 'review' ? '長官審查' : round.kind === 'caucus' ? '密商' : `／${rounds} 回合`);
+  stamp(st.phase === 'crisis' ? '!' : String(st.at + 1), st.phase === 'crisis' ? '危機' : round.kind === 'review' ? '長官審查' : round.kind === 'caucus' ? '休息密商' : `／${rounds} 回合`);
   clue(round.file);
   refresh();
   slip('');
   const list = [say('旁白', `${round.issue}｜${round.title}`, st.phase === 'crisis' ? '會場氣氛' : '本回合爭點')];
   (round.lead || []).forEach(([w, t]) => list.push(say(w, t)));
-  (round.team || []).forEach(([w, t]) => list.push(say(w, t, round.kind === 'review' ? '內部長官審查' : '代表團密商')));
+  (round.team || []).forEach(([w, t]) => list.push(say(w, t, round.kind === 'review' ? '內部長官審查' : '休息密商｜思考怎麼破')));
   if (line) {
     list.push(foreignLine(line));
     if (record.history.at(-1)?.text !== `${line.o}\n（中譯）${line.zh}`) log(c.delegate, line.o, line.zh);
   }
   play(list, () => {
-    const t = tray(`<p class="bapa-tray-q">${round.kind === 'review' ? '陸嚴在逼，沈岸在看，你要怎麼答？' : round.kind === 'caucus' ? '代表團要怎麼決定？' : round.lead ? '你要怎麼問？' : '你要怎麼回應？'}</p><div class="story-choices">${order(round).map((i, k) => `<button type="button" data-pick="${i}"><span>${'ABCD'[k]}</span>${esc(round.options[i].label)}</button>`).join('')}</div>`);
+    const t = tray(`<p class="bapa-tray-q">${round.kind === 'review' ? '陸嚴在逼，沈岸在看，你要怎麼答？' : round.kind === 'caucus' ? '休息十五分鐘。先想怎麼破對方的 TPG 主張，再決定。' : round.lead ? '你要怎麼問？' : '你要怎麼回應？'}</p><div class="story-choices">${order(round).map((i, k) => `<button type="button" data-pick="${i}"><span>${'ABCD'[k]}</span>${esc(round.options[i].label)}</button>`).join('')}</div>`);
     t.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => pick(round, Number(b.dataset.pick)));
   });
 }

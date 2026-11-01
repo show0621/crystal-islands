@@ -1,3 +1,6 @@
+// 進站暫不要求登入。登入頁、/api/login、驗票機制全部保留，要恢復時把這行改回 true。
+const GATE_ENABLED = false;
+
 const PUBLIC = new Set([
   '/login.html',
   '/login.css',
@@ -70,6 +73,8 @@ export const config = {
 };
 
 export default async function middleware(request) {
+  if (!GATE_ENABLED) return;
+
   const url = new URL(request.url);
   const path = url.pathname;
 

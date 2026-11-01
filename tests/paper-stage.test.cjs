@@ -115,6 +115,11 @@ test('every current episode and island has a paper set, without dropping newer c
   assert.match(read('world.js'), /原創案卷/);
 });
 
+test('hub clock omits the day-cycle caption', () => {
+  assert.doesNotMatch(read('island-3d.js'), /1日2分鐘/);
+  assert.match(read('island-life.css'), /\.scene-clock small\{display:none\}/);
+});
+
 test('hub dossier stays fixed to the viewport', () => {
   const js = read('island-stage.js');
   const css = read('island-stage.css');

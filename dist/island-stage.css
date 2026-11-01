@@ -40,6 +40,7 @@ body:not(.stage-page) .weather{display:none!important}
 /* Zoomed-in island name replaces the banner; never stack both. */
 body:not(.stage-page) .map:has(#island-identity:not([hidden])) .campaign-banner{display:none!important}
 body:not(.stage-page) #island-identity{top:12px!important;left:16px!important;z-index:3}
+body:not(.stage-page) .scene-clock small{display:none!important}
 body:not(.stage-page) .scene-clock{
   left:50%!important;
   right:auto!important;

@@ -780,11 +780,15 @@
   function isIslandVisit(root) {
     return !!root?.querySelector?.('.resident-visit, .pet-story');
   }
-  function isBoardOverlay(root) {
+  function isCaseToolOverlay(root) {
+    if (!liveScene) return false;
     const box = root || document.getElementById('modal-content');
-    return !!box?.querySelector?.('.detective-board, .paper-board-quest');
+    if (!box) return false;
+    // The live case window itself still uses ✕ to leave the island.
+    if (box.querySelector('#paper-logic .story-header') && box.querySelector('.paper-stage.paper-play:not(.paper-board-quest)')) return false;
+    return !!box.querySelector('.detective-board, .paper-board-quest, .evidence-bag, .learning-definition, .meeting-minute, .minute-list');
   }
-  function resumeCaseFromBoard() {
+  function resumeLiveCase() {
     const rec = typeof seasonRecord === 'function' ? seasonRecord() : null;
     if (!rec) return false;
     if (rec.complete && typeof showSeasonEnding === 'function') {
@@ -1242,21 +1246,21 @@
   const modalEl = document.getElementById('modal');
   const closeBtn = document.getElementById('close-modal');
   closeBtn?.addEventListener('click', event => {
-    if (!isBoardOverlay()) return;
+    if (!isCaseToolOverlay()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    resumeCaseFromBoard();
+    resumeLiveCase();
   }, true);
   modalEl?.addEventListener('cancel', event => {
-    if (!isBoardOverlay()) return;
+    if (!isCaseToolOverlay()) return;
     event.preventDefault();
-    resumeCaseFromBoard();
+    resumeLiveCase();
   });
   modalEl?.addEventListener('click', event => {
-    if (event.target !== modalEl || !isBoardOverlay()) return;
+    if (event.target !== modalEl || !isCaseToolOverlay()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    resumeCaseFromBoard();
+    resumeLiveCase();
   }, true);
   modalEl?.addEventListener('close', () => {
     const modal = document.getElementById('modal');
